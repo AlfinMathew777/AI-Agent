@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: shhg_backend
+    ports:
+      - "8002:8002"
+    environment:
+      - ADMIN_API_KEY=${ADMIN_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - HF_TOKEN=${HF_TOKEN}
+      # Path overrides for Docker paths
+      - DB_PATH=/app/hotel.db
+      - CHROMA_PATH=/app/chroma_db
+      - DATA_DIR=/app/app/data
+    volumes:
+      # Persist SQLite DB
+      # Maps local backend/hotel.db to container /app/hotel.db
+      - ./backend/hotel.db:/app/hotel.db
+      # Persist Chroma Vector DB
+      - ./backend/chroma_db:/app/chroma_db
+      # Persist Uploaded Files
+      - ./backend/app/data:/app/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build: ./frontend
+    container_name: shhg_frontend
+    ports:
+      - "5173:80"
+    depends_on:
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: shhg_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: shhg_worker
+    command: python -m app.queue.worker
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DB_PATH=/app/hotel.db
+      # Key env vars needed for worker logic
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - ADMIN_API_KEY=${ADMIN_API_KEY}
+      - INTEGRATION_MODE=${INTEGRATION_MODE}
+    volumes:
+      - ./backend/hotel.db:/app/hotel.db
+      - ./backend/app/data:/app/app/data
+    depends_on:
+      - backend
+      - redis
+    restart: unless-stopped
+
+volumes:
+  redis_data:

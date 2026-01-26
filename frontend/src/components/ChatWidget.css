@@ -1,0 +1,232 @@
+/* ChatWidget.css */
+
+:root {
+    --monica-bg: #ffffff;
+    /* Pure White */
+    --monica-surface: #f9fafb;
+    /* Gray-50 */
+    --monica-text: #1f2937;
+    /* Gray-800 */
+    --monica-subtext: #6b7280;
+    /* Gray-500 */
+    --monica-accent: #6366f1;
+    /* Indigo-500 */
+    --monica-border: #e5e7eb;
+    /* Gray-200 */
+    --monica-hover: #f3f4f6;
+    /* Gray-100 */
+}
+
+/* Floating Action Button */
+.chat-fab {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--monica-accent), #8b5cf6);
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    border: none;
+    cursor: pointer;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, opacity 0.2s, box-shadow 0.2s;
+    animation: float 3s ease-in-out infinite;
+}
+
+.chat-fab:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+}
+
+.fab-icon {
+    font-size: 1.8rem;
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+/* Sidebar Container */
+.chat-sidebar {
+    position: fixed;
+    top: 0;
+    right: -450px;
+    /* Hidden */
+    width: 400px;
+    height: 100vh;
+    background: var(--monica-bg);
+    color: var(--monica-text);
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.08);
+    /* Soft shadow */
+    z-index: 1001;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+.chat-sidebar.open {
+    right: 0;
+}
+
+/* Full Page Mode */
+.chat-sidebar.full-page {
+    width: 90vw;
+    height: 90vh;
+    top: 5vh;
+    right: 5vw;
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+/* Header */
+.sidebar-header {
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--monica-border);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 24px 24px 0 0;
+    /* Relevant in full page mode */
+}
+
+.header-title h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #4f46e5, #9333ea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--monica-subtext);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.icon-btn:hover {
+    background: var(--monica-hover);
+    color: var(--monica-text);
+}
+
+/* Tools Grid */
+.monica-tools {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--monica-border);
+    background: var(--monica-surface);
+}
+
+.tools-label {
+    font-size: 0.85rem;
+    color: var(--monica-subtext);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.more-link {
+    color: var(--monica-accent);
+    cursor: pointer;
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: 0.8rem;
+}
+
+.tools-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.tool-item {
+    background: white;
+    border: 1px solid var(--monica-border);
+    border-radius: 16px;
+    padding: 12px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.tool-item:hover {
+    background: white;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    border-color: var(--monica-accent);
+}
+
+.tool-icon {
+    font-size: 1.4rem;
+}
+
+.tool-name {
+    font-size: 0.75rem;
+    color: var(--monica-text);
+    font-weight: 500;
+}
+
+/* Chat Content Area */
+.sidebar-content {
+    flex: 1;
+    overflow: hidden;
+    background: white;
+    position: relative;
+    border-radius: 0 0 24px 24px;
+}
+
+/* Backdrop */
+.backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.2);
+    /* Lighter dim */
+    backdrop-filter: blur(4px);
+    z-index: 999;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .chat-sidebar {
+        width: 100%;
+    }
+
+    .chat-sidebar.full-page {
+        width: 100vw;
+        height: 100vh;
+        top: 0;
+        right: 0;
+        border-radius: 0;
+    }
+}

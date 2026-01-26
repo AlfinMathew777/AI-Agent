@@ -1,0 +1,128 @@
+/* src/App.css */
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem 3rem;
+  background: white;
+  border-bottom: 1px solid #e1e4e8;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--primary);
+  letter-spacing: -0.02em;
+}
+
+.brand-subtitle {
+  font-size: 0.75rem;
+  color: var(--accent);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+.nav {
+  display: flex;
+  gap: 0.75rem;
+  background: #f1f5f9;
+  padding: 0.25rem;
+  border-radius: 99px;
+}
+
+.nav-btn {
+  border: none;
+  padding: 0.6rem 1.25rem;
+  border-radius: 99px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  background: transparent;
+  color: var(--text-light);
+}
+
+.nav-btn:hover {
+  color: var(--primary);
+}
+
+.nav-btn.active {
+  background: white;
+  color: var(--primary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.nav-btn.bg-admin {
+  margin-left: 0.5rem;
+}
+
+.nav-btn.bg-admin:hover,
+.nav-btn.bg-admin.active {
+  background: #fffbeb;
+  /* Light gold bg */
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+.app-main {
+  flex: 1;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+}
+
+.page {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.page p {
+  color: var(--text-light);
+  font-size: 1.1rem;
+  max-width: 600px;
+}
+
+.app-footer {
+  padding: 1.5rem;
+  text-align: center;
+  background: white;
+  border-top: 1px solid #eee;
+  color: var(--text-light);
+  font-size: 0.85rem;
+}
