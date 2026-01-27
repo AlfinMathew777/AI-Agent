@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 import time
 import uuid
-from app.api.routes import health, ask, agent, admin_kb, admin_analytics, admin_commerce, catalog
+from app.api.routes import health, ask, agent, admin_kb, admin_analytics, admin_commerce, catalog, admin_monitoring
 from app.core.structured_logger import get_logger
 
 logger = get_logger("app.middleware")
@@ -70,6 +70,7 @@ def create_app() -> FastAPI:
     app.include_router(admin_kb.router)
     app.include_router(admin_analytics.router)
     app.include_router(admin_commerce.router)
+    app.include_router(admin_monitoring.router)
     app.include_router(catalog.router)
     
     from app.api.routes import payments, admin_jobs

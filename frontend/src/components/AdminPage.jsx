@@ -10,7 +10,7 @@ export default function AdminPage() {
     const [adminKey, setAdminKey] = useState(() => localStorage.getItem("adminKey") || "");
 
     // Tabs
-    const [activeTab, setActiveTab] = useState("analytics"); // analytics | bookings | tools | files
+    const [activeTab, setActiveTab] = useState("analytics"); // analytics | bookings | tools | files | chats | operations | payments | receipts | health
 
     // Data State
     const [analytics, setAnalytics] = useState(null);
@@ -18,6 +18,11 @@ export default function AdminPage() {
     const [bookingsData, setBookingsData] = useState({ bookings: [], summary: {} });
     const [toolStats, setToolStats] = useState(null);
     const [idxStatus, setIdxStatus] = useState(null);
+    const [chatsData, setChatsData] = useState({ chats: [], total: 0 });
+    const [operationsData, setOperationsData] = useState(null);
+    const [paymentsData, setPaymentsData] = useState({ payments: [] });
+    const [receiptsData, setReceiptsData] = useState({ receipts: [] });
+    const [healthData, setHealthData] = useState(null);
 
     // UI State
     const [statusMsg, setStatusMsg] = useState("");
@@ -56,6 +61,11 @@ export default function AdminPage() {
             fetchFiles();
             fetchIndexStatus();
         }
+        if (activeTab === "chats") fetchChats();
+        if (activeTab === "operations") fetchOperations();
+        if (activeTab === "payments") fetchPayments();
+        if (activeTab === "receipts") fetchReceipts();
+        if (activeTab === "health") fetchHealth();
     }, [activeTab, adminKey, filters, page]);
 
     // --- API Helper ---
@@ -129,6 +139,44 @@ export default function AdminPage() {
         if (data) setToolStats(data);
     }
 
+    async function fetchChats() {
+        const query = new URLSearchParams({
+            limit: LIMIT,
+            offset: page * LIMIT
+        });
+        if (filters.audience) query.append("audience", filters.audience);
+
+        const data = await adminFetch(`/admin/chats?${query.toString()}`);
+        if (data) setChatsData(data);
+    }
+
+    async function fetchOperations() {
+        const data = await adminFetch("/admin/operations");
+        if (data) setOperationsData(data);
+    }
+
+    async function fetchPayments() {
+        const query = new URLSearchParams({ limit: LIMIT });
+        if (filters.payment_status) query.append("status", filters.payment_status);
+
+        const data = await adminFetch(`/admin/payments?${query.toString()}`);
+        if (data) setPaymentsData(data);
+    }
+
+    async function fetchReceipts() {
+        const query = new URLSearchParams({ limit: LIMIT });
+        if (filters.date_from) query.append("date_from", filters.date_from);
+        if (filters.date_to) query.append("date_to", filters.date_to);
+
+        const data = await adminFetch(`/admin/receipts?${query.toString()}`);
+        if (data) setReceiptsData(data);
+    }
+
+    async function fetchHealth() {
+        const data = await adminFetch("/admin/system/health");
+        if (data) setHealthData(data);
+    }
+
     // --- Actions ---
     async function handleUpload(e, audience) {
         if (!e.target.files[0]) return;
@@ -190,8 +238,13 @@ export default function AdminPage() {
                 <div className="admin-tabs">
                     <button className={activeTab === "analytics" ? "active" : ""} onClick={() => setActiveTab("analytics")}>Analytics 📊</button>
                     <button className={activeTab === "bookings" ? "active" : ""} onClick={() => setActiveTab("bookings")}>Bookings 📅</button>
+                    <button className={activeTab === "chats" ? "active" : ""} onClick={() => setActiveTab("chats")}>Chats 💬</button>
+                    <button className={activeTab === "operations" ? "active" : ""} onClick={() => setActiveTab("operations")}>Operations 🔄</button>
+                    <button className={activeTab === "payments" ? "active" : ""} onClick={() => setActiveTab("payments")}>Payments 💳</button>
+                    <button className={activeTab === "receipts" ? "active" : ""} onClick={() => setActiveTab("receipts")}>Receipts 🧾</button>
                     <button className={activeTab === "tools" ? "active" : ""} onClick={() => setActiveTab("tools")}>Tool Stats 🛠️</button>
                     <button className={activeTab === "files" ? "active" : ""} onClick={() => setActiveTab("files")}>Knowledge 📚</button>
+                    <button className={activeTab === "health" ? "active" : ""} onClick={() => setActiveTab("health")}>Health 🏥</button>
                 </div>
 
                 {statusMsg && <div className="status-msg" style={{ textAlign: "center", marginTop: "1rem", color: statusMsg.includes("❌") ? "red" : "green" }}>{statusMsg}</div>}
@@ -363,6 +416,198 @@ export default function AdminPage() {
                             <button className="btn-primary" onClick={() => handleReindex("guest")}>Reindex Guest</button>
                             <button className="btn-primary" onClick={() => handleReindex("staff")}>Reindex Staff</button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* TAB: CHATS */}
+            {activeTab === "chats" && chatsData && adminKey && (
+                <div>
+                    <div className="filter-bar">
+                        <select value={filters.audience || ""} onChange={e => setFilters({ ...filters, audience: e.target.value })}>
+                            <option value="">All Audiences</option>
+                            <option value="guest">Guest</option>
+                            <option value="staff">Staff</option>
+                        </select>
+                        <button className="btn-primary" onClick={fetchChats}>Refresh</button>
+                    </div>
+
+                    <div className="table-container">
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Audience</th>
+                                    <th>Question</th>
+                                    <th>Answer</th>
+                                    <th>Model</th>
+                                    <th>Latency</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {chatsData.chats.map((c, idx) => (
+                                    <tr key={c.id || idx}>
+                                        <td>{new Date(c.timestamp).toLocaleString()}</td>
+                                        <td><span className={`status-badge status-${c.audience}`}>{c.audience}</span></td>
+                                        <td style={{ maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis" }}>{c.question}</td>
+                                        <td style={{ maxWidth: "300px", overflow: "hidden", textOverflow: "ellipsis" }}>{c.answer}</td>
+                                        <td>{c.model_used}</td>
+                                        <td>{c.latency_ms}ms</td>
+                                    </tr>
+                                ))}
+                                {chatsData.chats.length === 0 && <tr><td colSpan="6" style={{ textAlign: "center" }}>No chats found.</td></tr>}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className="pagination">
+                        <button disabled={page === 0} onClick={() => setPage(p => p - 1)}>Previous</button>
+                        <span>Page {page + 1} (Total: {chatsData.total})</span>
+                        <button disabled={chatsData.chats.length < LIMIT} onClick={() => setPage(p => p + 1)}>Next</button>
+                    </div>
+                </div>
+            )}
+
+            {/* TAB: OPERATIONS */}
+            {activeTab === "operations" && operationsData && adminKey && (
+                <div>
+                    <div className="stats-row" style={{ marginBottom: "2rem" }}>
+                        <div className="stat-card">
+                            <h3>Bookings Today</h3>
+                            <div className="stat-value">{operationsData.summary.bookings_today}</div>
+                        </div>
+                        <div className="stat-card">
+                            <h3>Reservations Today</h3>
+                            <div className="stat-value">{operationsData.summary.reservations_today}</div>
+                        </div>
+                        <div className="stat-card">
+                            <h3>Tickets Today</h3>
+                            <div className="stat-value">{operationsData.summary.tickets_today}</div>
+                        </div>
+                        <div className="stat-card">
+                            <h3>Revenue Today</h3>
+                            <div className="stat-value">${(operationsData.summary.revenue_today_cents / 100).toFixed(2)}</div>
+                        </div>
+                    </div>
+
+                    <h3>Recent Operations</h3>
+                    <div className="table-container">
+                        <table className="data-table">
+                            <thead>
+                                <tr><th>Type</th><th>Reference</th><th>Customer</th><th>Time</th><th>Status</th></tr>
+                            </thead>
+                            <tbody>
+                                {operationsData.recent_operations.map((op, idx) => (
+                                    <tr key={idx}>
+                                        <td>{op.type}</td>
+                                        <td>{op.ref}</td>
+                                        <td>{op.customer}</td>
+                                        <td>{new Date(op.created_at).toLocaleString()}</td>
+                                        <td><span className={`status-badge status-${op.status}`}>{op.status}</span></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {/* TAB: PAYMENTS */}
+            {activeTab === "payments" && paymentsData && adminKey && (
+                <div>
+                    <div className="filter-bar">
+                        <select value={filters.payment_status || ""} onChange={e => setFilters({ ...filters, payment_status: e.target.value })}>
+                            <option value="">All Statuses</option>
+                            <option value="paid">Paid</option>
+                            <option value="pending">Pending</option>
+                            <option value="failed">Failed</option>
+                        </select>
+                        <button className="btn-primary" onClick={fetchPayments}>Apply Filter</button>
+                    </div>
+
+                    <div className="table-container">
+                        <table className="data-table">
+                            <thead>
+                                <tr><th>Payment ID</th><th>Quote ID</th><th>Amount</th><th>Status</th><th>Created</th></tr>
+                            </thead>
+                            <tbody>
+                                {paymentsData.payments.map(p => (
+                                    <tr key={p.id}>
+                                        <td>{p.id}</td>
+                                        <td>{p.quote_id}</td>
+                                        <td>${(p.amount_cents / 100).toFixed(2)} {p.currency}</td>
+                                        <td><span className={`status-badge status-${p.status}`}>{p.status}</span></td>
+                                        <td>{new Date(p.created_at).toLocaleString()}</td>
+                                    </tr>
+                                ))}
+                                {paymentsData.payments.length === 0 && <tr><td colSpan="5" style={{ textAlign: "center" }}>No payments found.</td></tr>}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {/* TAB: RECEIPTS */}
+            {activeTab === "receipts" && receiptsData && adminKey && (
+                <div>
+                    <div className="filter-bar">
+                        <label>From:</label>
+                        <input type="date" value={filters.date_from || ""} onChange={e => setFilters({ ...filters, date_from: e.target.value })} />
+                        <label>To:</label>
+                        <input type="date" value={filters.date_to || ""} onChange={e => setFilters({ ...filters, date_to: e.target.value })} />
+                        <button className="btn-primary" onClick={fetchReceipts}>Apply Filter</button>
+                    </div>
+
+                    <div className="table-container">
+                        <table className="data-table">
+                            <thead>
+                                <tr><th>Receipt ID</th><th>Quote ID</th><th>Subtotal</th><th>Tax</th><th>Total</th><th>Status</th><th>Created</th></tr>
+                            </thead>
+                            <tbody>
+                                {receiptsData.receipts.map(r => (
+                                    <tr key={r.id}>
+                                        <td>{r.id}</td>
+                                        <td>{r.quote_id}</td>
+                                        <td>${(r.subtotal_cents / 100).toFixed(2)}</td>
+                                        <td>${(r.tax_cents / 100).toFixed(2)}</td>
+                                        <td><strong>${(r.total_cents / 100).toFixed(2)}</strong></td>
+                                        <td><span className={`status-badge status-${r.status}`}>{r.status}</span></td>
+                                        <td>{new Date(r.created_at).toLocaleString()}</td>
+                                    </tr>
+                                ))}
+                                {receiptsData.receipts.length === 0 && <tr><td colSpan="7" style={{ textAlign: "center" }}>No receipts found.</td></tr>}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {/* TAB: HEALTH */}
+            {activeTab === "health" && healthData && adminKey && (
+                <div className="admin-grid">
+                    <div className="admin-card">
+                        <h2>System Health 🏥</h2>
+                        <div className="stats-row">
+                            <div className="stat-card">
+                                <h3>Database</h3>
+                                <div className="stat-value" style={{ color: healthData.database === "healthy" ? "green" : "red" }}>
+                                    {healthData.database === "healthy" ? "✅" : "❌"} {healthData.database}
+                                </div>
+                            </div>
+                            <div className="stat-card">
+                                <h3>AI Service</h3>
+                                <div className="stat-value" style={{ color: healthData.ai_service === "configured" ? "green" : "orange" }}>
+                                    {healthData.ai_service === "configured" ? "✅" : "⚠️"} {healthData.ai_service}
+                                </div>
+                            </div>
+                            <div className="stat-card">
+                                <h3>Redis Queue</h3>
+                                <div className="stat-value" style={{ color: healthData.redis === "healthy" ? "green" : "gray" }}>
+                                    {healthData.redis === "healthy" ? "✅" : "➖"} {healthData.redis}
+                                </div>
+                            </div>
+                        </div>
+                        <button className="btn-primary" onClick={fetchHealth} style={{ marginTop: "2rem" }}>Refresh Health</button>
                     </div>
                 </div>
             )}

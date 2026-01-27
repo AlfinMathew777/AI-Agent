@@ -270,7 +270,7 @@ class PlanRunner:
         # All steps complete
         update_plan_status(plan.id, "completed")
         
-        # EXPLORE MODE COMPLETION
+        #EXPLORE MODE COMPLETION
         if plan.plan_mode == "explore":
             # Summarize options for user
             summary = self._summarize_explore_results(plan.context)
@@ -282,11 +282,60 @@ class PlanRunner:
                 "context_summary": plan.context # Full data if needed by FE
             }
 
-        final_summary = "\n".join(results_accumulator)
+        # COMMIT MODE - Professional customer-facing message
+        return self._format_customer_message(plan, results_accumulator)
+    
+    def _format_customer_message(self, plan: Plan, results_accumulator: list) -> Dict[str, Any]:
+        """Format professional, customer-friendly completion message."""
+        import re
+        
+        # Extract details from results
+        booking_id = None
+        receipt_id = None
+        availability_msg = None
+        
+        for step in plan.steps:
+            if step.status == "success" and step.result:
+                result_str = str(step.result)
+                
+                # Extract booking ID
+                if "BK-" in result_str:
+                    match = re.search(r'BK-\d+', result_str)
+                    if match:
+                        booking_id = match.group(0)
+                
+                # Extract receipt
+                if "RCP-" in result_str:
+                    match = re.search(r'RCP-\d+', result_str)
+                    if match:
+                        receipt_id = match.group(0)
+                
+                # Extract availability
+                if "available" in result_str.lower() and "Remaining" in result_str:
+                    match = re.search(r'Good news!.*?\(.*?\)', result_str)
+                    if match:
+                        availability_msg = match.group(0)
+        
+        # Build message
+        message = "✅ Perfect! Your booking has been confirmed.\n\n"
+        
+        if availability_msg:
+            message += f"{availability_msg}\n\n"
+        
+        if booking_id:
+            message += f"**Booking Reference:** {booking_id}\n"
+        
+        if receipt_id:
+            message += f"**Receipt:** {receipt_id}\n\n"
+            message += "📧 A confirmation email with your receipt details will be sent shortly."
+        else:
+            message += "\n📧 You'll receive a confirmation email soon."
+        
         return {
             "status": "success",
+            "answer": message,
             "plan_id": plan.id,
-            "answer": f"Plan Completed:\n{final_summary}" 
+            "session_id": plan.session_id
         }
 
     def _summarize_explore_results(self, context: Dict[str, Any]) -> str:
