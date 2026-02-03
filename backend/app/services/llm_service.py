@@ -121,12 +121,10 @@ class HotelAI:
 
     def query_docs(self, audience: str, query: str, n_results: int = 5, tenant_id: str = None) -> List[str]:
         """Retrieve relevant document chunks."""
-        # For backward compatibility or testing, allow tenant_id=None (fallback?)
-        # For SaaS, it should strictly require tenant_id.
+        # For backward compatibility, use default tenant if not provided
         if not tenant_id:
-             # Try default tenant for legacy calls? No, safer to return empty to force compliance.
-             print(f"[LLM] Warning: query_docs called without tenant_id. Returning empty.")
-             return []
+             tenant_id = "default-tenant-0000"
+             print(f"[LLM] Warning: query_docs called without tenant_id. Using default tenant.")
 
         try:
             collection = self.get_collection(audience, tenant_id)

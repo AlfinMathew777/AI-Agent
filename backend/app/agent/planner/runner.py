@@ -123,7 +123,7 @@ class PlanRunner:
         
         for step in plan.steps:
             if step.status == "success":
-                results_accumulator.append(f"Step {step.step_index}: Success ({step.result})")
+                # Don't add step details - keep customer message clean
                 continue
             
             if step.status == "failed" or step.status == "blocked":
@@ -251,11 +251,9 @@ class PlanRunner:
                             # Fallback string
                             plan.context[step.save_as] = result
                     
-                    msg = f"Step {step.step_index}: Tool '{step.tool_name}' completed."
-                    if "(Receipt Generated)" in str(result):
-                        msg += " (Receipt Generated)"
-                    results_accumulator.append(msg)
-                    # Don't clutter summary with full JSON
+                    # Don't add step details to results_accumulator - keep it clean for customer
+                    # Internal trace will be stored in DB separately
+                    pass  # Skip adding step details to customer message
                     
                 except Exception as e:
                     update_step_status(step.id, "failed", result_json=str(e))
@@ -265,7 +263,7 @@ class PlanRunner:
             elif step.step_type == "CHAT":
                 # ... existing ...
                 update_step_status(step.id, "success", result_json=step.result)
-                results_accumulator.append(f"Step {step.step_index}: Message: {step.result}")
+                # Don't add to results_accumulator - keep customer message clean
 
         # All steps complete
         update_plan_status(plan.id, "completed")
@@ -283,53 +281,125 @@ class PlanRunner:
             }
 
         # COMMIT MODE - Professional customer-facing message
-        return self._format_customer_message(plan, results_accumulator)
-    
-    def _format_customer_message(self, plan: Plan, results_accumulator: list) -> Dict[str, Any]:
-        """Format professional, customer-friendly completion message."""
-        import re
+        # Get last tool result for better formatting
+        last_result = None
+        for step in reversed(plan.steps):
+            if step.status == "success" and step.result:
+                try:
+                    import json
+                    last_result = json.loads(step.result)
+                except:
+                    last_result = step.result
+                break
         
-        # Extract details from results
+        return self._format_customer_message(plan, results_accumulator, last_tool_result=last_result)
+    
+    def _format_customer_message(self, plan: Plan, results_accumulator: list, last_tool_result: Any = None) -> Dict[str, Any]:
+        """
+        Format professional, customer-friendly completion message.
+        Hides all internal steps, tool details, and technical information.
+        """
+        import re
+        import json
+        
+        # Extract details from tool results (prefer last_tool_result, fallback to step results)
         booking_id = None
         receipt_id = None
-        availability_msg = None
+        room_type = None
+        date_str = None
+        reservation_id = None
+        ticket_id = None
         
-        for step in plan.steps:
-            if step.status == "success" and step.result:
-                result_str = str(step.result)
-                
-                # Extract booking ID
-                if "BK-" in result_str:
-                    match = re.search(r'BK-\d+', result_str)
+        # Try to parse last_tool_result first (most recent)
+        if last_tool_result:
+            if isinstance(last_tool_result, dict):
+                booking_id = last_tool_result.get("booking_id") or last_tool_result.get("booking_ref")
+                receipt_id = last_tool_result.get("receipt_id") or last_tool_result.get("receipt_ref")
+                room_type = last_tool_result.get("room_type")
+                date_str = last_tool_result.get("date_human") or last_tool_result.get("date")
+                reservation_id = last_tool_result.get("reservation_id")
+                ticket_id = last_tool_result.get("ticket_id")
+            elif isinstance(last_tool_result, str):
+                # Try to extract from string
+                if "BK-" in last_tool_result:
+                    match = re.search(r'BK-[\w\d-]+', last_tool_result)
                     if match:
                         booking_id = match.group(0)
-                
-                # Extract receipt
-                if "RCP-" in result_str:
-                    match = re.search(r'RCP-\d+', result_str)
+                if "RCP-" in last_tool_result:
+                    match = re.search(r'RCP-[\w\d-]+', last_tool_result)
                     if match:
                         receipt_id = match.group(0)
-                
-                # Extract availability
-                if "available" in result_str.lower() and "Remaining" in result_str:
-                    match = re.search(r'Good news!.*?\(.*?\)', result_str)
-                    if match:
-                        availability_msg = match.group(0)
         
-        # Build message
-        message = "✅ Perfect! Your booking has been confirmed.\n\n"
+        # Fallback: Extract from step results
+        if not booking_id or not receipt_id:
+            for step in plan.steps:
+                if step.status == "success" and step.result:
+                    result_str = str(step.result)
+                    
+                    # Try to parse as JSON first
+                    try:
+                        result_dict = json.loads(result_str)
+                        if not booking_id:
+                            booking_id = result_dict.get("booking_id") or result_dict.get("booking_ref")
+                        if not receipt_id:
+                            receipt_id = result_dict.get("receipt_id") or result_dict.get("receipt_ref")
+                        if not room_type:
+                            room_type = result_dict.get("room_type")
+                        if not date_str:
+                            date_str = result_dict.get("date_human") or result_dict.get("date")
+                    except:
+                        # Not JSON, extract from string
+                        if "BK-" in result_str and not booking_id:
+                            match = re.search(r'BK-[\w\d-]+', result_str)
+                            if match:
+                                booking_id = match.group(0)
+                        if "RCP-" in result_str and not receipt_id:
+                            match = re.search(r'RCP-[\w\d-]+', result_str)
+                            if match:
+                                receipt_id = match.group(0)
         
-        if availability_msg:
-            message += f"{availability_msg}\n\n"
+        # Build professional customer message
+        lines = []
         
+        # Determine action type from tool names
+        tool_names = [step.tool_name for step in plan.steps if step.tool_name]
+        has_booking = any("book" in name.lower() for name in tool_names if name)
+        has_reservation = any("reserve" in name.lower() or "table" in name.lower() for name in tool_names if name)
+        has_ticket = any("ticket" in name.lower() or "event" in name.lower() for name in tool_names if name)
+        
+        if has_booking:
+            room_display = room_type or "room"
+            date_display = date_str or "your selected date"
+            lines.append(f"✅ Your {room_display} is booked for {date_display}!")
+        elif has_reservation:
+            lines.append("✅ Your table reservation has been confirmed!")
+        elif has_ticket:
+            lines.append("✅ Your event tickets have been booked!")
+        else:
+            lines.append("✅ Your request has been completed successfully!")
+        
+        lines.append("")  # Blank line
+        
+        # Add booking details
         if booking_id:
-            message += f"**Booking Reference:** {booking_id}\n"
+            lines.append("Booking Details:")
+            lines.append(f"• Booking ID: {booking_id}")
+        
+        if reservation_id:
+            lines.append(f"• Reservation ID: {reservation_id}")
+        
+        if ticket_id:
+            lines.append(f"• Ticket ID: {ticket_id}")
         
         if receipt_id:
-            message += f"**Receipt:** {receipt_id}\n\n"
-            message += "📧 A confirmation email with your receipt details will be sent shortly."
-        else:
-            message += "\n📧 You'll receive a confirmation email soon."
+            lines.append(f"• Receipt: {receipt_id}")
+            lines.append("")
+            lines.append("📧 A confirmation email with your receipt has been sent.")
+        elif booking_id or reservation_id or ticket_id:
+            lines.append("")
+            lines.append("📧 You'll receive a confirmation email shortly.")
+        
+        message = "\n".join(lines)
         
         return {
             "status": "success",

@@ -32,21 +32,35 @@ def init_db():
     conn = get_db_connection()
     c = conn.cursor()
     
-    # Chat Logs Table
+    # Chat Logs Table (Enhanced with internal trace)
     c.execute('''
         CREATE TABLE IF NOT EXISTS chat_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            tenant_id TEXT,
+            session_id TEXT,
             audience TEXT,
             question TEXT,
             answer TEXT,
+            internal_trace_json TEXT,
             model_used TEXT,
             latency_ms INTEGER,
             tokens_in INTEGER,
             tokens_out INTEGER,
-            feedback_score INTEGER
+            feedback_score INTEGER,
+            FOREIGN KEY(tenant_id) REFERENCES tenants(id)
         )
     ''')
+    # Add session_id and internal_trace_json if missing
+    try:
+        c.execute("ALTER TABLE chat_logs ADD COLUMN session_id TEXT")
+    except: pass
+    try:
+        c.execute("ALTER TABLE chat_logs ADD COLUMN internal_trace_json TEXT")
+    except: pass
+    c.execute("CREATE INDEX IF NOT EXISTS idx_chat_logs_tenant ON chat_logs(tenant_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_chat_logs_session ON chat_logs(session_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_chat_logs_audience ON chat_logs(audience)")
 
     # Tool Calls Table
     c.execute('''
@@ -311,6 +325,77 @@ def init_db():
         )
     ''')
 
+    # 9. Rooms Table (Individual Room Inventory)
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS rooms (
+            id TEXT PRIMARY KEY,
+            tenant_id TEXT,
+            room_number TEXT NOT NULL,
+            floor INTEGER,
+            room_type TEXT, -- standard, deluxe, suite
+            status TEXT DEFAULT 'available', -- available, occupied, cleaning_needed, maintenance
+            capacity INTEGER DEFAULT 2,
+            amenities TEXT, -- JSON string or comma-separated
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(tenant_id) REFERENCES tenants(id),
+            UNIQUE(tenant_id, room_number)
+        )
+    ''')
+    c.execute("CREATE INDEX IF NOT EXISTS idx_rooms_tenant ON rooms(tenant_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_rooms_floor ON rooms(floor)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_rooms_status ON rooms(status)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_rooms_type ON rooms(room_type)")
+
+    # 10. Reservations Table (Enhanced with Room Assignment)
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS reservations (
+            id TEXT PRIMARY KEY,
+            tenant_id TEXT,
+            room_id TEXT, -- FK to rooms
+            room_number TEXT, -- Denormalized for quick access
+            guest_name TEXT NOT NULL,
+            guest_phone TEXT,
+            guest_email TEXT,
+            check_in_date TEXT, -- YYYY-MM-DD
+            check_out_date TEXT, -- YYYY-MM-DD
+            status TEXT DEFAULT 'pending', -- pending, checked_in, checked_out, cancelled
+            total_amount REAL,
+            payment_status TEXT DEFAULT 'pending', -- pending, paid, refunded
+            special_requests TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(tenant_id) REFERENCES tenants(id),
+            FOREIGN KEY(room_id) REFERENCES rooms(id)
+        )
+    ''')
+    c.execute("CREATE INDEX IF NOT EXISTS idx_reservations_tenant ON reservations(tenant_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_reservations_room ON reservations(room_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_reservations_status ON reservations(status)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_reservations_dates ON reservations(check_in_date, check_out_date)")
+
+    # 11. Housekeeping Table (Cleaning Workflow)
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS housekeeping (
+            id TEXT PRIMARY KEY,
+            tenant_id TEXT,
+            room_id TEXT, -- FK to rooms
+            room_number TEXT, -- Denormalized
+            cleaner_id TEXT, -- FK to users (optional, can be NULL)
+            cleaner_name TEXT, -- Denormalized
+            status TEXT DEFAULT 'pending', -- pending, in_progress, completed
+            started_at DATETIME,
+            completed_at DATETIME,
+            notes TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(tenant_id) REFERENCES tenants(id),
+            FOREIGN KEY(room_id) REFERENCES rooms(id)
+        )
+    ''')
+    c.execute("CREATE INDEX IF NOT EXISTS idx_housekeeping_tenant ON housekeeping(tenant_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_housekeeping_room ON housekeeping(room_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_housekeeping_status ON housekeeping(status)")
+
     # ---------------------------------------------------------
     # Task 13.1-A: New Commerce Inventory Schema
     # ---------------------------------------------------------
@@ -529,6 +614,45 @@ def init_db():
     try:
         c.execute("ALTER TABLE quotes ADD COLUMN execution_error TEXT")
     except: pass
+
+    # ---------------------------------------------------------
+    # Admin Panel: Operations & Monitoring Tables
+    # ---------------------------------------------------------
+    
+    # Operations Table (for tracking bookings, reservations, tickets, etc.)
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS operations (
+            id TEXT PRIMARY KEY,
+            tenant_id TEXT NOT NULL,
+            type TEXT NOT NULL,
+            entity_id TEXT,
+            amount_cents INTEGER DEFAULT 0,
+            status TEXT,
+            metadata_json TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(tenant_id) REFERENCES tenants(id)
+        )
+    ''')
+    c.execute("CREATE INDEX IF NOT EXISTS idx_operations_tenant ON operations(tenant_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_operations_type ON operations(type)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_operations_status ON operations(status)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_operations_created ON operations(created_at)")
+    
+    # System Errors Table (for monitoring)
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS system_errors (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tenant_id TEXT,
+            error_type TEXT,
+            error_message TEXT,
+            stack_trace TEXT,
+            endpoint TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(tenant_id) REFERENCES tenants(id)
+        )
+    ''')
+    c.execute("CREATE INDEX IF NOT EXISTS idx_errors_tenant ON system_errors(tenant_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_errors_created ON system_errors(created_at)")
 
     conn.commit()
     conn.close()

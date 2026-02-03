@@ -18,9 +18,16 @@ async def ask_guest(
   try:
     answer = await get_guest_answer(payload.question, tenant_id=tenant_id)
     
-    # Log to DB
+    # Log to DB with internal trace (if available)
     latency = int((time.time() - start_time) * 1000)
-    log_chat("guest", payload.question, answer, latency_ms=latency, tenant_id=tenant_id)
+    internal_trace = None
+    if isinstance(answer, dict) and "_internal_trace" in answer:
+        internal_trace = answer.pop("_internal_trace")  # Remove from response, keep in DB
+        answer_text = answer.get("answer", str(answer))
+    else:
+        answer_text = answer if isinstance(answer, str) else str(answer)
+    
+    log_chat("guest", payload.question, answer_text, latency_ms=latency, tenant_id=tenant_id, session_id=None, internal_trace_json=internal_trace)
     
     return AnswerResponse(
       role="guest",

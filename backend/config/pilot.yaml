@@ -1,0 +1,27 @@
+pilot:
+  enabled: true
+  property_id: "pillinger_house"
+  property_name: "Pillinger House"
+  
+  allowed_room_types:
+    - "standard_queen"
+    - "deluxe_king"
+  
+  base_rates:
+    standard_queen: 320
+    deluxe_king: 450
+  
+  amenities:
+    spa: false
+    restaurant: true
+    parking: true
+    wifi: true
+    minibar: true
+  
+  # Cloudbeds configuration
+  cloudbeds:
+    use_sandbox: true  # Set to false for production
+    api_timeout: 5
+    circuit_breaker:
+      failure_threshold: 3
+      timeout_seconds: 60

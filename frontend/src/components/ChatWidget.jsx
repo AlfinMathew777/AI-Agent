@@ -70,7 +70,7 @@ export default function ChatWidget({ onNavigate }) {
 
                 {/* Chat Area */}
                 <div className="sidebar-content">
-                    <ChatBox endpoint="/api/ask/agent" />
+                    <ChatBox endpoint="/api/ask/agent" audience="guest" />
                 </div>
             </div>
 

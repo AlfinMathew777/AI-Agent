@@ -44,3 +44,10 @@ from fastapi import Header
 async def get_tenant_header(x_tenant_id: str = Header(default="default-tenant-0000")) -> str:
     # In a real app, strict validation of existence would happen here.
     return x_tenant_id
+
+async def get_current_user_optional():
+    """Optional version of get_current_user that returns None instead of raising on missing token."""
+    try:
+        return await get_current_user()
+    except HTTPException:
+        return None

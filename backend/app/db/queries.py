@@ -5,15 +5,15 @@ from datetime import datetime, timedelta
 from app.config import ROOM_CAPACITY, DEFAULT_ROOM_CAPACITY
 from app.db.session import get_db_connection
 
-def log_chat(audience, question, answer, model="gemini-flash-latest", latency_ms=0, tenant_id=None):
-    """Log a chat interaction."""
+def log_chat(audience, question, answer, model="gemini-flash-latest", latency_ms=0, tenant_id=None, session_id=None, internal_trace_json=None):
+    """Log a chat interaction with optional internal trace."""
     try:
         conn = get_db_connection()
         c = conn.cursor()
         c.execute('''
-            INSERT INTO chat_logs (audience, question, answer, model_used, latency_ms, tenant_id)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (audience, question, answer, model, latency_ms, tenant_id))
+            INSERT INTO chat_logs (audience, question, answer, model_used, latency_ms, tenant_id, session_id, internal_trace_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (audience, question, answer, model, latency_ms, tenant_id, session_id, internal_trace_json))
         conn.commit()
         conn.close()
     except Exception as e:

@@ -9,8 +9,8 @@ export default function AdminPage() {
     // Auth
     const [adminKey, setAdminKey] = useState(() => localStorage.getItem("adminKey") || "");
 
-    // Tabs
-    const [activeTab, setActiveTab] = useState("analytics"); // analytics | bookings | tools | files | chats | operations | payments | receipts | health
+    // Tabs - Enhanced with room management
+    const [activeTab, setActiveTab] = useState("overview"); // overview | chats | payments | health | rooms | reservations | housekeeping
 
     // Data State
     const [analytics, setAnalytics] = useState(null);
@@ -23,6 +23,9 @@ export default function AdminPage() {
     const [paymentsData, setPaymentsData] = useState({ payments: [] });
     const [receiptsData, setReceiptsData] = useState({ receipts: [] });
     const [healthData, setHealthData] = useState(null);
+    const [roomsData, setRoomsData] = useState({ rooms: [], statistics: {} });
+    const [reservationsData, setReservationsData] = useState({ reservations: [], total: 0 });
+    const [housekeepingData, setHousekeepingData] = useState({ tasks: [], total: 0, statistics: {} });
 
     // UI State
     const [statusMsg, setStatusMsg] = useState("");
@@ -54,24 +57,40 @@ export default function AdminPage() {
         setPage(0);
         setStatusMsg("");
 
-        if (activeTab === "analytics") fetchAnalytics();
-        if (activeTab === "bookings") fetchBookings();
-        if (activeTab === "tools") fetchToolStats();
-        if (activeTab === "files") {
-            fetchFiles();
-            fetchIndexStatus();
+        // Fetch data based on active tab
+        if (activeTab === "overview") {
+            fetchAnalytics();
+            fetchOperations();
+            fetchHealth();
+            fetchRoomStatistics();
         }
         if (activeTab === "chats") fetchChats();
-        if (activeTab === "operations") fetchOperations();
-        if (activeTab === "payments") fetchPayments();
-        if (activeTab === "receipts") fetchReceipts();
+        if (activeTab === "payments") {
+            fetchPayments();
+            fetchReceipts();
+        }
         if (activeTab === "health") fetchHealth();
+        if (activeTab === "rooms") {
+            fetchRooms();
+            fetchRoomStatistics();
+        }
+        if (activeTab === "reservations") fetchReservations();
+        if (activeTab === "housekeeping") {
+            fetchHousekeeping();
+            fetchHousekeepingStatistics();
+        }
     }, [activeTab, adminKey, filters, page]);
 
     // --- API Helper ---
     async function adminFetch(path, options = {}) {
+        // Get JWT token if available (for production auth)
+        const token = localStorage.getItem("access_token") || localStorage.getItem("token");
+        
         const headers = {
-            "x-admin-key": adminKey,
+            "Content-Type": "application/json",
+            ...(adminKey ? { "x-admin-key": adminKey } : {}),
+            ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+            "X-Tenant-ID": "default-tenant-0000",
             ...options.headers
         };
 
@@ -79,7 +98,8 @@ export default function AdminPage() {
             const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
 
             if (res.status === 401) {
-                setStatusMsg("❌ Unauthorized. Please check your Admin Key.");
+                const err = await res.json().catch(() => ({ detail: "Unauthorized" }));
+                setStatusMsg(`❌ Unauthorized: ${err.detail || "Please check your Admin Key or login."}`);
                 return null;
             }
             if (res.status === 500) {
@@ -152,7 +172,19 @@ export default function AdminPage() {
 
     async function fetchOperations() {
         const data = await adminFetch("/admin/operations");
-        if (data) setOperationsData(data);
+        if (data) {
+            // Transform to match expected format
+            const transformed = {
+                summary: {
+                    bookings_today: data.summary.by_type?.booking?.count || 0,
+                    reservations_today: data.summary.by_type?.reservation?.count || 0,
+                    tickets_today: data.summary.by_type?.ticket?.count || 0,
+                    revenue_today_cents: data.summary.revenue_today_cents || 0
+                },
+                recent_operations: data.recent_operations || []
+            };
+            setOperationsData(transformed);
+        }
     }
 
     async function fetchPayments() {
@@ -173,8 +205,59 @@ export default function AdminPage() {
     }
 
     async function fetchHealth() {
-        const data = await adminFetch("/admin/system/health");
-        if (data) setHealthData(data);
+        const data = await adminFetch("/admin/system/status");
+        if (data) {
+            // Transform to match expected format
+            setHealthData({
+                database: data.database,
+                ai_service: data.ai_service,
+                redis: data.queue || "unavailable",
+                recent_errors: data.recent_errors || []
+            });
+        }
+    }
+
+    async function fetchRooms() {
+        const query = new URLSearchParams();
+        if (filters.floor) query.append("floor", filters.floor);
+        if (filters.room_type) query.append("room_type", filters.room_type);
+        if (filters.status) query.append("status", filters.status);
+
+        const data = await adminFetch(`/admin/rooms?${query.toString()}`);
+        if (data) setRoomsData(prev => ({ ...prev, rooms: data.rooms || [] }));
+    }
+
+    async function fetchRoomStatistics() {
+        const data = await adminFetch("/admin/rooms/statistics");
+        if (data) setRoomsData(prev => ({ ...prev, statistics: data }));
+    }
+
+    async function fetchReservations() {
+        const query = new URLSearchParams({
+            limit: LIMIT,
+            offset: page * LIMIT
+        });
+        if (filters.status) query.append("status", filters.status);
+        if (filters.room_number) query.append("room_number", filters.room_number);
+
+        const data = await adminFetch(`/admin/reservations?${query.toString()}`);
+        if (data) setReservationsData(data);
+    }
+
+    async function fetchHousekeeping() {
+        const query = new URLSearchParams({
+            limit: LIMIT,
+            offset: page * LIMIT
+        });
+        if (filters.status) query.append("status", filters.status);
+
+        const data = await adminFetch(`/admin/housekeeping/tasks?${query.toString()}`);
+        if (data) setHousekeepingData(prev => ({ ...prev, tasks: data.tasks || [], total: data.total || 0 }));
+    }
+
+    async function fetchHousekeepingStatistics() {
+        const data = await adminFetch("/admin/housekeeping/statistics");
+        if (data) setHousekeepingData(prev => ({ ...prev, statistics: data }));
     }
 
     // --- Actions ---
@@ -219,399 +302,770 @@ export default function AdminPage() {
     }
 
     // --- Renderers ---
-    return (
-        <div className="admin-container">
-            <header className="admin-header">
-                <h1>🧠 Hotel Brain Admin</h1>
-
-                {/* Admin Key Input */}
+    if (!adminKey) {
+        return (
+            <div className="admin-container">
                 <div className="admin-key-section">
-                    <label>🔑 Admin Key:</label>
+                    <h2>🔑 Admin Access</h2>
+                    <label>Enter Admin API Key:</label>
                     <input
                         type="password"
                         value={adminKey}
                         onChange={(e) => setAdminKey(e.target.value)}
-                        placeholder="Enter endpoint key..."
+                        placeholder="Enter your admin key..."
                     />
+                    <button className="btn-primary" style={{ width: "100%" }} onClick={() => setAdminKey(adminKey)}>
+                        Access Dashboard
+                    </button>
+                    {statusMsg && (
+                        <div className="status-msg" style={{ marginTop: "1rem", color: statusMsg.includes("❌") ? "#dc2626" : "#059669" }}>
+                            {statusMsg}
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="admin-container">
+            {/* Exit Button - Return to Main Site */}
+            <button 
+                className="admin-exit-btn"
+                onClick={() => window.location.reload()}
+                title="Return to Main Site"
+            >
+                ← Back to Site
+            </button>
+
+            {/* Sidebar */}
+            <aside className="admin-sidebar">
+                <div className="sidebar-logo">
+                    <h1>SOUTHERN HORIZONS</h1>
+                    <p>HOTEL MANAGEMENT</p>
                 </div>
 
-                <div className="admin-tabs">
-                    <button className={activeTab === "analytics" ? "active" : ""} onClick={() => setActiveTab("analytics")}>Analytics 📊</button>
-                    <button className={activeTab === "bookings" ? "active" : ""} onClick={() => setActiveTab("bookings")}>Bookings 📅</button>
-                    <button className={activeTab === "chats" ? "active" : ""} onClick={() => setActiveTab("chats")}>Chats 💬</button>
-                    <button className={activeTab === "operations" ? "active" : ""} onClick={() => setActiveTab("operations")}>Operations 🔄</button>
-                    <button className={activeTab === "payments" ? "active" : ""} onClick={() => setActiveTab("payments")}>Payments 💳</button>
-                    <button className={activeTab === "receipts" ? "active" : ""} onClick={() => setActiveTab("receipts")}>Receipts 🧾</button>
-                    <button className={activeTab === "tools" ? "active" : ""} onClick={() => setActiveTab("tools")}>Tool Stats 🛠️</button>
-                    <button className={activeTab === "files" ? "active" : ""} onClick={() => setActiveTab("files")}>Knowledge 📚</button>
-                    <button className={activeTab === "health" ? "active" : ""} onClick={() => setActiveTab("health")}>Health 🏥</button>
-                </div>
-
-                {statusMsg && <div className="status-msg" style={{ textAlign: "center", marginTop: "1rem", color: statusMsg.includes("❌") ? "red" : "green" }}>{statusMsg}</div>}
-            </header>
-
-            {!adminKey && (
-                <div style={{ textAlign: "center", padding: "2rem" }}>
-                    <h2>Please enter Admin API Key to proceed.</h2>
-                </div>
-            )}
-
-            {/* TAB: ANALYTICS (Existing Logic) */}
-            {activeTab === "analytics" && analytics && adminKey && (
-                <div className="dashboard-grid">
-                    <div className="stats-row">
-                        <div className="stat-card">
-                            <h3>Active Chats</h3>
-                            <div className="stat-value">{analytics.daily_stats.active_chats}</div>
-                        </div>
-                        <div className="stat-card">
-                            <h3>Queries Today</h3>
-                            <div className="stat-value">{analytics.daily_stats.queries_today}</div>
-                        </div>
-                        <div className="stat-card">
-                            <h3>Total Bookings</h3>
-                            <div className="stat-value">{bookingsData?.summary?.total || "-"}</div>
-                        </div>
+                <div className="sidebar-profile">
+                    <div className="profile-avatar">A</div>
+                    <div className="profile-info">
+                        <div className="profile-name">Admin</div>
+                        <div className="profile-role">Admin</div>
                     </div>
                 </div>
-            )}
 
-            {/* TAB: BOOKINGS */}
-            {activeTab === "bookings" && bookingsData && adminKey && (
-                <div>
-                    <div className="filter-bar">
-                        <input type="date" value={filters.date} onChange={e => setFilters({ ...filters, date: e.target.value })} />
-                        <select value={filters.room_type} onChange={e => setFilters({ ...filters, room_type: e.target.value })}>
-                            <option value="">All Rooms</option>
-                            <option value="Standard">Standard</option>
-                            <option value="Deluxe">Deluxe</option>
-                            <option value="Suite">Suite</option>
-                        </select>
-                        <select value={filters.status} onChange={e => setFilters({ ...filters, status: e.target.value })}>
-                            <option value="">All Statuses</option>
-                            <option value="confirmed">Confirmed</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
-                        <button className="btn-primary" onClick={fetchBookings}>Apply Filters</button>
+                <nav className="sidebar-nav">
+                    <div 
+                        className={`nav-item ${activeTab === "overview" ? "active" : ""}`}
+                        onClick={() => setActiveTab("overview")}
+                    >
+                        <div className="nav-icon">📊</div>
+                        <span>Dashboard</span>
                     </div>
+                    <div 
+                        className={`nav-item ${activeTab === "chats" ? "active" : ""}`}
+                        onClick={() => setActiveTab("chats")}
+                    >
+                        <div className="nav-icon">💬</div>
+                        <span>Chats</span>
+                    </div>
+                    <div 
+                        className={`nav-item ${activeTab === "payments" ? "active" : ""}`}
+                        onClick={() => setActiveTab("payments")}
+                    >
+                        <div className="nav-icon">💳</div>
+                        <span>Payments</span>
+                    </div>
+                    <div 
+                        className={`nav-item ${activeTab === "rooms" ? "active" : ""}`}
+                        onClick={() => setActiveTab("rooms")}
+                    >
+                        <div className="nav-icon">🛏️</div>
+                        <span>Rooms</span>
+                    </div>
+                    <div 
+                        className={`nav-item ${activeTab === "reservations" ? "active" : ""}`}
+                        onClick={() => setActiveTab("reservations")}
+                    >
+                        <div className="nav-icon">📅</div>
+                        <span>Reservations</span>
+                    </div>
+                    <div 
+                        className={`nav-item ${activeTab === "housekeeping" ? "active" : ""}`}
+                        onClick={() => setActiveTab("housekeeping")}
+                    >
+                        <div className="nav-icon">🧹</div>
+                        <span>Housekeeping</span>
+                    </div>
+                    <div 
+                        className={`nav-item ${activeTab === "users" ? "active" : ""}`}
+                        onClick={() => setActiveTab("users")}
+                    >
+                        <div className="nav-icon">👥</div>
+                        <span>Users</span>
+                    </div>
+                    <div 
+                        className={`nav-item ${activeTab === "health" ? "active" : ""}`}
+                        onClick={() => setActiveTab("health")}
+                    >
+                        <div className="nav-icon">🏥</div>
+                        <span>System Health</span>
+                    </div>
+                </nav>
 
-                    <div className="table-container">
-                        <table className="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Booking ID</th>
-                                    <th>Guest</th>
-                                    <th>Room</th>
-                                    <th>Date</th>
-                                    <th>Status</th>
-                                    <th>Created At</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {bookingsData.bookings.map(b => (
-                                    <tr key={b.booking_id}>
-                                        <td>{b.booking_id}</td>
-                                        <td>{b.guest_name}</td>
-                                        <td>{b.room_type}</td>
-                                        <td>{b.date}</td>
-                                        <td>
-                                            <span className={`status-badge status-${b.status.toLowerCase()}`}>{b.status}</span>
-                                        </td>
-                                        <td>{b.created_at}</td>
-                                    </tr>
-                                ))}
-                                {bookingsData.bookings.length === 0 && <tr><td colSpan="6" style={{ textAlign: "center" }}>No bookings found.</td></tr>}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div className="pagination">
-                        <button disabled={page === 0} onClick={() => setPage(p => p - 1)}>Previous</button>
-                        <span>Page {page + 1}</span>
-                        <button disabled={bookingsData.bookings.length < LIMIT} onClick={() => setPage(p => p + 1)}>Next</button>
-                    </div>
+                <div className="sidebar-logout">
+                    <button className="logout-btn" onClick={() => setAdminKey("")}>
+                        <span>Logout</span>
+                        <span>→</span>
+                    </button>
                 </div>
-            )}
+            </aside>
 
-            {/* TAB: TOOLS */}
-            {activeTab === "tools" && toolStats && adminKey && (
-                <div>
-                    <div className="filter-bar">
-                        <label>Days: </label>
-                        <select value={filters.days} onChange={e => setFilters({ ...filters, days: e.target.value })}>
-                            <option value="1">Last 24h</option>
-                            <option value="7">Last 7 Days</option>
-                            <option value="30">Last 30 Days</option>
-                        </select>
+            {/* Main Content */}
+            <main className="admin-main">
+                {statusMsg && (
+                    <div className="status-msg" style={{ color: statusMsg.includes("❌") ? "#dc2626" : "#059669", background: statusMsg.includes("❌") ? "#fee2e2" : "#d1fae5" }}>
+                        {statusMsg}
                     </div>
+                )}
 
-                    <div className="stats-row" style={{ marginBottom: "2rem" }}>
-                        <div className="stat-card">
-                            <h3>Total Calls</h3>
-                            <div className="stat-value">{toolStats.totals.tool_calls}</div>
+            {/* TAB: OVERVIEW - Professional dashboard */}
+            {activeTab === "overview" && (
+                <>
+                    {/* Welcome Section */}
+                    <div className="welcome-section">
+                        <div className="welcome-box">
+                            <h2>Welcome back, <span>Admin</span> 👋</h2>
                         </div>
-                        <div className="stat-card">
-                            <h3>Success</h3>
-                            <div className="stat-value" style={{ color: "green" }}>{toolStats.totals.success}</div>
-                        </div>
-                        <div className="stat-card">
-                            <h3>Avg Latency</h3>
-                            <div className="stat-value">{toolStats.totals.avg_latency_ms}ms</div>
+                        <div className="overview-box">
+                            Today's Overview
                         </div>
                     </div>
 
-                    <h3>Tool Usage Breakdown</h3>
-                    <div className="table-container">
-                        <table className="data-table">
-                            <thead><tr><th>Tool</th><th>Calls</th><th>Success</th><th>Failed</th><th>Avg Latency</th></tr></thead>
-                            <tbody>
-                                {toolStats.by_tool.map(t => (
-                                    <tr key={t.tool_name}>
-                                        <td>{t.tool_name}</td>
-                                        <td>{t.tool_calls}</td>
-                                        <td>{t.success}</td>
-                                        <td>{t.failed}</td>
-                                        <td>{t.avg_latency_ms}ms</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
+                    {/* Today's Stats - Compact Room Statistics */}
+                    <div className="stats-row compact">
+                        <div className="stat-card beige">
+                            <div className="stat-header">
+                                <div className="stat-label">TOTAL ROOMS</div>
+                                <div className="stat-icon beige">🚪</div>
+                            </div>
+                            <div className="stat-value">{roomsData?.statistics?.total || 0}</div>
+                        </div>
 
-            {/* TAB: FILES (Knowledge) */}
-            {activeTab === "files" && adminKey && (
-                <div className="admin-grid">
-                    <div className="admin-card">
-                        <h2>Manage Files</h2>
-                        <div className="file-list">
-                            <h3>Guest Docs</h3>
-                            <ul>{files.guest.map(f => <li key={f}>{f}</li>)}</ul>
-                            <div className="upload-zone" style={{ marginTop: "1rem" }}>
-                                <input type="file" onChange={(e) => handleUpload(e, "guest")} disabled={uploading} />
+                        <div className="stat-card green">
+                            <div className="stat-header">
+                                <div className="stat-label">AVAILABLE</div>
+                                <div className="stat-icon green">✅</div>
+                            </div>
+                            <div className="stat-value">{roomsData?.statistics?.available || 0}</div>
+                        </div>
+
+                        <div className="stat-card red">
+                            <div className="stat-header">
+                                <div className="stat-label">OCCUPIED</div>
+                                <div className="stat-icon red">🛏️</div>
+                            </div>
+                            <div className="stat-value">{roomsData?.statistics?.occupied || 0}</div>
+                        </div>
+
+                        <div className="stat-card blue">
+                            <div className="stat-header">
+                                <div className="stat-label">CLEANING NEEDED</div>
+                                <div className="stat-icon blue">🧹</div>
+                            </div>
+                            <div className="stat-value">{roomsData?.statistics?.cleaning_needed || 0}</div>
+                        </div>
+
+                        <div className="stat-card beige">
+                            <div className="stat-header">
+                                <div className="stat-label">CLEANERS AVAILABLE</div>
+                                <div className="stat-icon beige">👷</div>
+                            </div>
+                            <div className="stat-value">{housekeepingData?.statistics?.in_progress ? 1 : 0}</div>
+                        </div>
+
+                        <div className="stat-card gold">
+                            <div className="stat-header">
+                                <div className="stat-label">UNDER MAINTENANCE</div>
+                                <div className="stat-icon gold">🔧</div>
+                            </div>
+                            <div className="stat-value">{roomsData?.statistics?.maintenance || 0}</div>
+                            <div className="stat-subtitle">Rooms being serviced</div>
+                        </div>
+                    </div>
+
+                    {/* Recent Activity */}
+                    {operationsData && operationsData.recent_operations && operationsData.recent_operations.length > 0 && (
+                        <div className="content-section">
+                            <h2 className="section-title">Recent Operations</h2>
+                            <div className="table-container">
+                                <table className="data-table">
+                                    <thead>
+                                        <tr><th>Type</th><th>Reference</th><th>Customer</th><th>Time</th><th>Status</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {operationsData.recent_operations.slice(0, 10).map((op, idx) => (
+                                            <tr key={idx}>
+                                                <td>{op.type}</td>
+                                                <td>{op.ref || op.entity_id || "-"}</td>
+                                                <td>{op.customer || "-"}</td>
+                                                <td>{new Date(op.created_at).toLocaleString()}</td>
+                                                <td><span className={`status-badge status-${op.status || "pending"}`}>{op.status || "Pending"}</span></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-                        <div className="file-list" style={{ marginTop: "2rem" }}>
-                            <h3>Staff Docs</h3>
-                            <ul>{files.staff.map(f => <li key={f}>{f}</li>)}</ul>
-                            <div className="upload-zone" style={{ marginTop: "1rem" }}>
-                                <input type="file" onChange={(e) => handleUpload(e, "staff")} disabled={uploading} />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="admin-card">
-                        <h2>Index Status 🧠</h2>
-                        {idxStatus ? (
-                            <div>
-                                <p><strong>Guest Docs Indexed:</strong> {idxStatus.guest_docs}</p>
-                                <p><strong>Staff Docs Indexed:</strong> {idxStatus.staff_docs}</p>
-                                <p><strong>Last Reindex:</strong> {idxStatus.last_reindex_time || "Never"}</p>
-                                {idxStatus.last_reindex_error && <p style={{ color: "red" }}>Last Error: {idxStatus.last_reindex_error}</p>}
-                            </div>
-                        ) : <p>Loading status...</p>}
-
-                        <div style={{ display: "flex", gap: "10px", marginTop: "2rem" }}>
-                            <button className="btn-primary" onClick={() => handleReindex("guest")}>Reindex Guest</button>
-                            <button className="btn-primary" onClick={() => handleReindex("staff")}>Reindex Staff</button>
-                        </div>
-                    </div>
-                </div>
+                    )}
+                </>
             )}
 
             {/* TAB: CHATS */}
-            {activeTab === "chats" && chatsData && adminKey && (
-                <div>
-                    <div className="filter-bar">
-                        <select value={filters.audience || ""} onChange={e => setFilters({ ...filters, audience: e.target.value })}>
-                            <option value="">All Audiences</option>
-                            <option value="guest">Guest</option>
-                            <option value="staff">Staff</option>
-                        </select>
-                        <button className="btn-primary" onClick={fetchChats}>Refresh</button>
-                    </div>
-
-                    <div className="table-container">
-                        <table className="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Time</th>
-                                    <th>Audience</th>
-                                    <th>Question</th>
-                                    <th>Answer</th>
-                                    <th>Model</th>
-                                    <th>Latency</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {chatsData.chats.map((c, idx) => (
-                                    <tr key={c.id || idx}>
-                                        <td>{new Date(c.timestamp).toLocaleString()}</td>
-                                        <td><span className={`status-badge status-${c.audience}`}>{c.audience}</span></td>
-                                        <td style={{ maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis" }}>{c.question}</td>
-                                        <td style={{ maxWidth: "300px", overflow: "hidden", textOverflow: "ellipsis" }}>{c.answer}</td>
-                                        <td>{c.model_used}</td>
-                                        <td>{c.latency_ms}ms</td>
-                                    </tr>
-                                ))}
-                                {chatsData.chats.length === 0 && <tr><td colSpan="6" style={{ textAlign: "center" }}>No chats found.</td></tr>}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div className="pagination">
-                        <button disabled={page === 0} onClick={() => setPage(p => p - 1)}>Previous</button>
-                        <span>Page {page + 1} (Total: {chatsData.total})</span>
-                        <button disabled={chatsData.chats.length < LIMIT} onClick={() => setPage(p => p + 1)}>Next</button>
-                    </div>
-                </div>
-            )}
-
-            {/* TAB: OPERATIONS */}
-            {activeTab === "operations" && operationsData && adminKey && (
-                <div>
-                    <div className="stats-row" style={{ marginBottom: "2rem" }}>
-                        <div className="stat-card">
-                            <h3>Bookings Today</h3>
-                            <div className="stat-value">{operationsData.summary.bookings_today}</div>
-                        </div>
-                        <div className="stat-card">
-                            <h3>Reservations Today</h3>
-                            <div className="stat-value">{operationsData.summary.reservations_today}</div>
-                        </div>
-                        <div className="stat-card">
-                            <h3>Tickets Today</h3>
-                            <div className="stat-value">{operationsData.summary.tickets_today}</div>
-                        </div>
-                        <div className="stat-card">
-                            <h3>Revenue Today</h3>
-                            <div className="stat-value">${(operationsData.summary.revenue_today_cents / 100).toFixed(2)}</div>
+            {activeTab === "chats" && (
+                <>
+                    <div className="welcome-section">
+                        <div className="welcome-box">
+                            <h2>Chat History</h2>
                         </div>
                     </div>
 
-                    <h3>Recent Operations</h3>
-                    <div className="table-container">
-                        <table className="data-table">
-                            <thead>
-                                <tr><th>Type</th><th>Reference</th><th>Customer</th><th>Time</th><th>Status</th></tr>
-                            </thead>
-                            <tbody>
-                                {operationsData.recent_operations.map((op, idx) => (
-                                    <tr key={idx}>
-                                        <td>{op.type}</td>
-                                        <td>{op.ref}</td>
-                                        <td>{op.customer}</td>
-                                        <td>{new Date(op.created_at).toLocaleString()}</td>
-                                        <td><span className={`status-badge status-${op.status}`}>{op.status}</span></td>
+                    <div className="content-section">
+                        <div className="filter-bar">
+                            <select value={filters.audience || ""} onChange={e => setFilters({ ...filters, audience: e.target.value })}>
+                                <option value="">All Audiences</option>
+                                <option value="guest">Guest</option>
+                                <option value="staff">Staff</option>
+                            </select>
+                            <button className="btn-primary" onClick={fetchChats}>Refresh</button>
+                        </div>
+
+                        <div className="table-container">
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Audience</th>
+                                        <th>Question</th>
+                                        <th>Answer</th>
+                                        <th>Model</th>
+                                        <th>Latency</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {chatsData?.chats?.map((c, idx) => (
+                                        <tr key={c.id || idx}>
+                                            <td>{new Date(c.timestamp).toLocaleString()}</td>
+                                            <td><span className={`status-badge status-${c.audience}`}>{c.audience}</span></td>
+                                            <td style={{ maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis" }}>{c.question}</td>
+                                            <td style={{ maxWidth: "300px", overflow: "hidden", textOverflow: "ellipsis" }}>{c.answer}</td>
+                                            <td>{c.model_used}</td>
+                                            <td>{c.latency_ms}ms</td>
+                                        </tr>
+                                    ))}
+                                    {(!chatsData?.chats || chatsData.chats.length === 0) && <tr><td colSpan="6" style={{ textAlign: "center" }}>No chats found.</td></tr>}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="pagination">
+                            <button disabled={page === 0} onClick={() => setPage(p => p - 1)}>Previous</button>
+                            <span>Page {page + 1} (Total: {chatsData?.total || 0})</span>
+                            <button disabled={!chatsData?.chats || chatsData.chats.length < LIMIT} onClick={() => setPage(p => p + 1)}>Next</button>
+                        </div>
                     </div>
-                </div>
+                </>
             )}
 
-            {/* TAB: PAYMENTS */}
-            {activeTab === "payments" && paymentsData && adminKey && (
-                <div>
-                    <div className="filter-bar">
-                        <select value={filters.payment_status || ""} onChange={e => setFilters({ ...filters, payment_status: e.target.value })}>
-                            <option value="">All Statuses</option>
-                            <option value="paid">Paid</option>
-                            <option value="pending">Pending</option>
-                            <option value="failed">Failed</option>
-                        </select>
-                        <button className="btn-primary" onClick={fetchPayments}>Apply Filter</button>
+            {/* TAB: PAYMENTS - Combined Payments & Receipts */}
+            {activeTab === "payments" && (
+                <>
+                    <div className="welcome-section">
+                        <div className="welcome-box">
+                            <h2>Payments & Receipts</h2>
+                        </div>
                     </div>
 
-                    <div className="table-container">
-                        <table className="data-table">
-                            <thead>
-                                <tr><th>Payment ID</th><th>Quote ID</th><th>Amount</th><th>Status</th><th>Created</th></tr>
-                            </thead>
-                            <tbody>
-                                {paymentsData.payments.map(p => (
-                                    <tr key={p.id}>
-                                        <td>{p.id}</td>
-                                        <td>{p.quote_id}</td>
-                                        <td>${(p.amount_cents / 100).toFixed(2)} {p.currency}</td>
-                                        <td><span className={`status-badge status-${p.status}`}>{p.status}</span></td>
-                                        <td>{new Date(p.created_at).toLocaleString()}</td>
-                                    </tr>
-                                ))}
-                                {paymentsData.payments.length === 0 && <tr><td colSpan="5" style={{ textAlign: "center" }}>No payments found.</td></tr>}
-                            </tbody>
-                        </table>
+                    <div className="content-section">
+                    <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
+                        <button 
+                            className={filters.payment_view === "payments" || !filters.payment_view ? "btn-primary" : ""}
+                            onClick={() => {
+                                setFilters({ ...filters, payment_view: "payments" });
+                                fetchPayments();
+                            }}
+                        >
+                            Payments
+                        </button>
+                        <button 
+                            className={filters.payment_view === "receipts" ? "btn-primary" : ""}
+                            onClick={() => {
+                                setFilters({ ...filters, payment_view: "receipts" });
+                                fetchReceipts();
+                            }}
+                        >
+                            Receipts
+                        </button>
                     </div>
-                </div>
+
+                    {/* Payments View */}
+                    {(!filters.payment_view || filters.payment_view === "payments") && paymentsData && (
+                        <div>
+                            <div className="filter-bar">
+                                <select value={filters.payment_status || ""} onChange={e => setFilters({ ...filters, payment_status: e.target.value })}>
+                                    <option value="">All Statuses</option>
+                                    <option value="paid">Paid</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="failed">Failed</option>
+                                </select>
+                                <button className="btn-primary" onClick={fetchPayments}>Apply Filter</button>
+                            </div>
+
+                            <div className="table-container">
+                                <table className="data-table">
+                                    <thead>
+                                        <tr><th>Payment ID</th><th>Quote ID</th><th>Amount</th><th>Status</th><th>Created</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {paymentsData.payments.map(p => (
+                                            <tr key={p.id}>
+                                                <td>{p.id}</td>
+                                                <td>{p.quote_id}</td>
+                                                <td>${(p.amount_cents / 100).toFixed(2)} {p.currency}</td>
+                                                <td><span className={`status-badge status-${p.status}`}>{p.status}</span></td>
+                                                <td>{new Date(p.created_at).toLocaleString()}</td>
+                                            </tr>
+                                        ))}
+                                        {paymentsData.payments.length === 0 && <tr><td colSpan="5" style={{ textAlign: "center" }}>No payments found.</td></tr>}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Receipts View */}
+                    {filters.payment_view === "receipts" && receiptsData && (
+                        <div>
+                            <div className="filter-bar">
+                                <label>From:</label>
+                                <input type="date" value={filters.date_from || ""} onChange={e => setFilters({ ...filters, date_from: e.target.value })} />
+                                <label>To:</label>
+                                <input type="date" value={filters.date_to || ""} onChange={e => setFilters({ ...filters, date_to: e.target.value })} />
+                                <button className="btn-primary" onClick={fetchReceipts}>Apply Filter</button>
+                            </div>
+
+                            <div className="table-container">
+                                <table className="data-table">
+                                    <thead>
+                                        <tr><th>Receipt ID</th><th>Quote ID</th><th>Subtotal</th><th>Tax</th><th>Total</th><th>Status</th><th>Created</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {receiptsData.receipts.map(r => (
+                                            <tr key={r.id}>
+                                                <td>{r.id}</td>
+                                                <td>{r.quote_id}</td>
+                                                <td>${(r.subtotal_cents / 100).toFixed(2)}</td>
+                                                <td>${(r.tax_cents / 100).toFixed(2)}</td>
+                                                <td><strong>${(r.total_cents / 100).toFixed(2)}</strong></td>
+                                                <td><span className={`status-badge status-${r.status}`}>{r.status}</span></td>
+                                                <td>{new Date(r.created_at).toLocaleString()}</td>
+                                            </tr>
+                                        ))}
+                                        {receiptsData.receipts.length === 0 && <tr><td colSpan="7" style={{ textAlign: "center" }}>No receipts found.</td></tr>}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                    </div>
+                </>
             )}
 
-            {/* TAB: RECEIPTS */}
-            {activeTab === "receipts" && receiptsData && adminKey && (
-                <div>
-                    <div className="filter-bar">
-                        <label>From:</label>
-                        <input type="date" value={filters.date_from || ""} onChange={e => setFilters({ ...filters, date_from: e.target.value })} />
-                        <label>To:</label>
-                        <input type="date" value={filters.date_to || ""} onChange={e => setFilters({ ...filters, date_to: e.target.value })} />
-                        <button className="btn-primary" onClick={fetchReceipts}>Apply Filter</button>
+            {/* TAB: ROOMS */}
+            {activeTab === "rooms" && (
+                <>
+                    <div className="welcome-section">
+                        <div className="welcome-box">
+                            <h2>Room Management</h2>
+                        </div>
                     </div>
 
-                    <div className="table-container">
-                        <table className="data-table">
-                            <thead>
-                                <tr><th>Receipt ID</th><th>Quote ID</th><th>Subtotal</th><th>Tax</th><th>Total</th><th>Status</th><th>Created</th></tr>
-                            </thead>
-                            <tbody>
-                                {receiptsData.receipts.map(r => (
-                                    <tr key={r.id}>
-                                        <td>{r.id}</td>
-                                        <td>{r.quote_id}</td>
-                                        <td>${(r.subtotal_cents / 100).toFixed(2)}</td>
-                                        <td>${(r.tax_cents / 100).toFixed(2)}</td>
-                                        <td><strong>${(r.total_cents / 100).toFixed(2)}</strong></td>
-                                        <td><span className={`status-badge status-${r.status}`}>{r.status}</span></td>
-                                        <td>{new Date(r.created_at).toLocaleString()}</td>
-                                    </tr>
-                                ))}
-                                {receiptsData.receipts.length === 0 && <tr><td colSpan="7" style={{ textAlign: "center" }}>No receipts found.</td></tr>}
-                            </tbody>
-                        </table>
+                    <div className="content-section">
+                        <div className="filter-bar">
+                            <select value={filters.floor || ""} onChange={e => setFilters({ ...filters, floor: e.target.value })}>
+                                <option value="">All Floors</option>
+                                <option value="1">Floor 1</option>
+                                <option value="2">Floor 2</option>
+                                <option value="3">Floor 3</option>
+                            </select>
+                            <select value={filters.room_type || ""} onChange={e => setFilters({ ...filters, room_type: e.target.value })}>
+                                <option value="">All Types</option>
+                                <option value="standard">Standard</option>
+                                <option value="deluxe">Deluxe</option>
+                                <option value="suite">Suite</option>
+                            </select>
+                            <select value={filters.status || ""} onChange={e => setFilters({ ...filters, status: e.target.value })}>
+                                <option value="">All Statuses</option>
+                                <option value="available">Available</option>
+                                <option value="occupied">Occupied</option>
+                                <option value="cleaning_needed">Cleaning Needed</option>
+                                <option value="maintenance">Maintenance</option>
+                            </select>
+                            <button className="btn-primary" onClick={fetchRooms}>Refresh</button>
+                        </div>
+
+                        {/* Room Statistics */}
+                        {roomsData?.statistics && (
+                            <div className="stats-row" style={{ marginBottom: "1.5rem" }}>
+                                <div className="stat-card beige">
+                                    <div className="stat-header">
+                                        <div className="stat-label">Total Rooms</div>
+                                        <div className="stat-icon beige">🛏️</div>
+                                    </div>
+                                    <div className="stat-value">{roomsData.statistics.total || 0}</div>
+                                </div>
+                                <div className="stat-card green">
+                                    <div className="stat-header">
+                                        <div className="stat-label">Available</div>
+                                        <div className="stat-icon green">✅</div>
+                                    </div>
+                                    <div className="stat-value">{roomsData.statistics.available || 0}</div>
+                                </div>
+                                <div className="stat-card red">
+                                    <div className="stat-header">
+                                        <div className="stat-label">Occupied</div>
+                                        <div className="stat-icon red">🚫</div>
+                                    </div>
+                                    <div className="stat-value">{roomsData.statistics.occupied || 0}</div>
+                                </div>
+                                <div className="stat-card blue">
+                                    <div className="stat-header">
+                                        <div className="stat-label">Cleaning Needed</div>
+                                        <div className="stat-icon blue">🧹</div>
+                                    </div>
+                                    <div className="stat-value">{roomsData.statistics.cleaning_needed || 0}</div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Rooms Grid (Grouped by Floor) */}
+                        <div className="rooms-grid">
+                            {[1, 2, 3].map(floor => {
+                                const floorRooms = roomsData?.rooms?.filter(r => r.floor === floor) || [];
+                                if (floorRooms.length === 0 && filters.floor && filters.floor !== String(floor)) return null;
+                                
+                                return (
+                                    <div key={floor} className="floor-section">
+                                        <h3 className="floor-title">Floor {floor}</h3>
+                                        <div className="rooms-row">
+                                            {floorRooms.map(room => (
+                                                <div key={room.id} className={`room-card room-${room.status}`}>
+                                                    <div className="room-number">{room.room_number}</div>
+                                                    <div className="room-type">{room.room_type}</div>
+                                                    <div className={`room-status status-${room.status}`}>
+                                                        {room.status.replace('_', ' ')}
+                                                    </div>
+                                                    <div className="room-capacity">Capacity: {room.capacity}</div>
+                                                </div>
+                                            ))}
+                                            {floorRooms.length === 0 && <p style={{ padding: "1rem", color: "#666" }}>No rooms on this floor</p>}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            {(!roomsData?.rooms || roomsData.rooms.length === 0) && (
+                                <p style={{ textAlign: "center", padding: "2rem", color: "#666" }}>No rooms found. Create rooms to get started.</p>
+                            )}
+                        </div>
                     </div>
-                </div>
+                </>
             )}
 
-            {/* TAB: HEALTH */}
-            {activeTab === "health" && healthData && adminKey && (
-                <div className="admin-grid">
-                    <div className="admin-card">
-                        <h2>System Health 🏥</h2>
+            {/* TAB: RESERVATIONS */}
+            {activeTab === "reservations" && (
+                <>
+                    <div className="welcome-section">
+                        <div className="welcome-box">
+                            <h2>Reservations</h2>
+                        </div>
+                    </div>
+
+                    <div className="content-section">
+                        <div className="filter-bar">
+                            <select value={filters.status || ""} onChange={e => setFilters({ ...filters, status: e.target.value })}>
+                                <option value="">All Statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="checked_in">Checked In</option>
+                                <option value="checked_out">Checked Out</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                            <input 
+                                type="text" 
+                                placeholder="Room Number" 
+                                value={filters.room_number || ""} 
+                                onChange={e => setFilters({ ...filters, room_number: e.target.value })} 
+                            />
+                            <button className="btn-primary" onClick={fetchReservations}>Refresh</button>
+                        </div>
+
+                        <div className="table-container">
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Guest Name</th>
+                                        <th>Room</th>
+                                        <th>Check-In</th>
+                                        <th>Check-Out</th>
+                                        <th>Status</th>
+                                        <th>Amount</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {reservationsData?.reservations?.map((res, idx) => (
+                                        <tr key={res.id || idx}>
+                                            <td>{res.guest_name}</td>
+                                            <td>{res.room_number}</td>
+                                            <td>{res.check_in_date}</td>
+                                            <td>{res.check_out_date}</td>
+                                            <td><span className={`status-badge status-${res.status}`}>{res.status}</span></td>
+                                            <td>${(res.total_amount || 0).toFixed(2)}</td>
+                                            <td>
+                                                {res.status === "pending" && (
+                                                    <button className="btn-small" onClick={() => {
+                                                        adminFetch(`/admin/reservations/${res.id}/checkin`, { method: "PUT" }).then(() => fetchReservations());
+                                                    }}>Check In</button>
+                                                )}
+                                                {res.status === "checked_in" && (
+                                                    <button className="btn-small" onClick={() => {
+                                                        adminFetch(`/admin/reservations/${res.id}/checkout`, { method: "PUT" }).then(() => fetchReservations());
+                                                    }}>Check Out</button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {(!reservationsData?.reservations || reservationsData.reservations.length === 0) && (
+                                        <tr><td colSpan="7" style={{ textAlign: "center" }}>No reservations found.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="pagination">
+                            <button disabled={page === 0} onClick={() => setPage(p => p - 1)}>Previous</button>
+                            <span>Page {page + 1} (Total: {reservationsData?.total || 0})</span>
+                            <button disabled={!reservationsData?.reservations || reservationsData.reservations.length < LIMIT} onClick={() => setPage(p => p + 1)}>Next</button>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* TAB: HOUSEKEEPING */}
+            {activeTab === "housekeeping" && (
+                <>
+                    <div className="welcome-section">
+                        <div className="welcome-box">
+                            <h2>Housekeeping</h2>
+                        </div>
+                    </div>
+
+                    <div className="content-section">
+                        <div className="filter-bar">
+                            <select value={filters.status || ""} onChange={e => setFilters({ ...filters, status: e.target.value })}>
+                                <option value="">All Statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                            <button className="btn-primary" onClick={fetchHousekeeping}>Refresh</button>
+                        </div>
+
+                        {/* Housekeeping Statistics */}
+                        {housekeepingData?.statistics && (
+                            <div className="stats-row" style={{ marginBottom: "1.5rem" }}>
+                                <div className="stat-card beige">
+                                    <div className="stat-header">
+                                        <div className="stat-label">Pending</div>
+                                        <div className="stat-icon beige">⏳</div>
+                                    </div>
+                                    <div className="stat-value">{housekeepingData.statistics.pending || 0}</div>
+                                </div>
+                                <div className="stat-card blue">
+                                    <div className="stat-header">
+                                        <div className="stat-label">In Progress</div>
+                                        <div className="stat-icon blue">🧹</div>
+                                    </div>
+                                    <div className="stat-value">{housekeepingData.statistics.in_progress || 0}</div>
+                                </div>
+                                <div className="stat-card green">
+                                    <div className="stat-header">
+                                        <div className="stat-label">Completed</div>
+                                        <div className="stat-icon green">✅</div>
+                                    </div>
+                                    <div className="stat-value">{housekeepingData.statistics.completed || 0}</div>
+                                </div>
+                                <div className="stat-card gold">
+                                    <div className="stat-header">
+                                        <div className="stat-label">Today</div>
+                                        <div className="stat-icon gold">📅</div>
+                                    </div>
+                                    <div className="stat-value">{housekeepingData.statistics.today || 0}</div>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="table-container">
+                            <table className="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Room</th>
+                                        <th>Cleaner</th>
+                                        <th>Status</th>
+                                        <th>Started</th>
+                                        <th>Completed</th>
+                                        <th>Notes</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {housekeepingData?.tasks?.map((task, idx) => (
+                                        <tr key={task.id || idx}>
+                                            <td>{task.room_number}</td>
+                                            <td>{task.cleaner_name || "Unassigned"}</td>
+                                            <td><span className={`status-badge status-${task.status}`}>{task.status}</span></td>
+                                            <td>{task.started_at ? new Date(task.started_at).toLocaleString() : "-"}</td>
+                                            <td>{task.completed_at ? new Date(task.completed_at).toLocaleString() : "-"}</td>
+                                            <td>{task.notes || "-"}</td>
+                                            <td>
+                                                {task.status === "pending" && (
+                                                    <button className="btn-small" onClick={() => {
+                                                        adminFetch(`/admin/housekeeping/tasks/${task.id}/start`, { 
+                                                            method: "PUT",
+                                                            headers: { "Content-Type": "application/json" },
+                                                            body: JSON.stringify({})
+                                                        }).then(() => fetchHousekeeping());
+                                                    }}>Start</button>
+                                                )}
+                                                {task.status === "in_progress" && (
+                                                    <button className="btn-small" onClick={() => {
+                                                        adminFetch(`/admin/housekeeping/tasks/${task.id}/complete`, { 
+                                                            method: "PUT",
+                                                            headers: { "Content-Type": "application/json" },
+                                                            body: JSON.stringify({ notes: "" })
+                                                        }).then(() => fetchHousekeeping());
+                                                    }}>Complete</button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {(!housekeepingData?.tasks || housekeepingData.tasks.length === 0) && (
+                                        <tr><td colSpan="7" style={{ textAlign: "center" }}>No housekeeping tasks found.</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="pagination">
+                            <button disabled={page === 0} onClick={() => setPage(p => p - 1)}>Previous</button>
+                            <span>Page {page + 1} (Total: {housekeepingData?.total || 0})</span>
+                            <button disabled={!housekeepingData?.tasks || housekeepingData.tasks.length < LIMIT} onClick={() => setPage(p => p + 1)}>Next</button>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* TAB: USERS */}
+            {activeTab === "users" && (
+                <>
+                    <div className="welcome-section">
+                        <div className="welcome-box">
+                            <h2>User Management</h2>
+                        </div>
+                    </div>
+
+                    <div className="content-section">
+                        <p style={{ padding: "2rem", textAlign: "center", color: "#666" }}>
+                            User management feature coming soon...
+                        </p>
+                    </div>
+                </>
+            )}
+
+            {/* TAB: SYSTEM HEALTH */}
+            {activeTab === "health" && (
+                <>
+                    <div className="welcome-section">
+                        <div className="welcome-box">
+                            <h2>System Health</h2>
+                        </div>
+                    </div>
+
+                    <div className="content-section">
+                        <h2 className="section-title">System Status</h2>
                         <div className="stats-row">
                             <div className="stat-card">
-                                <h3>Database</h3>
-                                <div className="stat-value" style={{ color: healthData.database === "healthy" ? "green" : "red" }}>
-                                    {healthData.database === "healthy" ? "✅" : "❌"} {healthData.database}
+                                <div className="stat-header">
+                                    <div className="stat-label">Database</div>
+                                    <div className="stat-icon" style={{ background: healthData?.database === "healthy" ? "#d1fae5" : "#fee2e2", color: healthData?.database === "healthy" ? "#059669" : "#dc2626" }}>
+                                        {healthData?.database === "healthy" ? "✅" : "❌"}
+                                    </div>
+                                </div>
+                                <div className="stat-value" style={{ fontSize: "1.5rem" }}>
+                                    {healthData?.database === "healthy" ? "Healthy" : "Unhealthy"}
                                 </div>
                             </div>
                             <div className="stat-card">
-                                <h3>AI Service</h3>
-                                <div className="stat-value" style={{ color: healthData.ai_service === "configured" ? "green" : "orange" }}>
-                                    {healthData.ai_service === "configured" ? "✅" : "⚠️"} {healthData.ai_service}
+                                <div className="stat-header">
+                                    <div className="stat-label">AI Service</div>
+                                    <div className="stat-icon" style={{ background: healthData?.ai_service === "configured" ? "#d1fae5" : "#fef3c7", color: healthData?.ai_service === "configured" ? "#059669" : "#d97706" }}>
+                                        {healthData?.ai_service === "configured" ? "✅" : "⚠️"}
+                                    </div>
+                                </div>
+                                <div className="stat-value" style={{ fontSize: "1.5rem" }}>
+                                    {healthData?.ai_service === "configured" ? "Configured" : "Not Configured"}
                                 </div>
                             </div>
                             <div className="stat-card">
-                                <h3>Redis Queue</h3>
-                                <div className="stat-value" style={{ color: healthData.redis === "healthy" ? "green" : "gray" }}>
-                                    {healthData.redis === "healthy" ? "✅" : "➖"} {healthData.redis}
+                                <div className="stat-header">
+                                    <div className="stat-label">Queue</div>
+                                    <div className="stat-icon" style={{ background: healthData?.redis === "available" ? "#d1fae5" : "#f3f4f6", color: healthData?.redis === "available" ? "#059669" : "#6b7280" }}>
+                                        {healthData?.redis === "available" ? "✅" : "➖"}
+                                    </div>
+                                </div>
+                                <div className="stat-value" style={{ fontSize: "1.5rem" }}>
+                                    {healthData?.redis === "available" ? "Available" : "Unavailable"}
                                 </div>
                             </div>
                         </div>
+                        
                         <button className="btn-primary" onClick={fetchHealth} style={{ marginTop: "2rem" }}>Refresh Health</button>
+                        
+                        {healthData?.recent_errors && healthData.recent_errors.length > 0 && (
+                            <div style={{ marginTop: "2rem" }}>
+                                <h3>Recent Errors</h3>
+                                <div className="table-container">
+                                    <table className="data-table">
+                                        <thead>
+                                            <tr><th>Time</th><th>Type</th><th>Message</th><th>Endpoint</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            {healthData.recent_errors.slice(0, 10).map((err, idx) => (
+                                                <tr key={idx}>
+                                                    <td>{new Date(err.created_at).toLocaleString()}</td>
+                                                    <td>{err.error_type}</td>
+                                                    <td style={{ maxWidth: "300px", overflow: "hidden", textOverflow: "ellipsis" }}>{err.error_message}</td>
+                                                    <td>{err.endpoint || "-"}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
                     </div>
-                </div>
+                </>
             )}
 
+            </main>
         </div>
     );
 }

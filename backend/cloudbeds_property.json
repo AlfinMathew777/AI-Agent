@@ -1,0 +1,26 @@
+{
+    "property_id": "cloudbeds_001",
+    "name": "Premier Boutique Hotel",
+    "pms_type": "cloudbeds",
+    "pms_credentials": {
+        "client_id": "REPLACE_WITH_CLOUDBEDS_CLIENT_ID",
+        "client_secret": "REPLACE_WITH_CLOUDBEDS_CLIENT_SECRET",
+        "property_id": "REPLACE_WITH_CLOUDBEDS_PROPERTY_ID"
+    },
+    "tier": "standard",
+    "config": {
+        "location": "Sydney, NSW",
+        "amenities": {
+            "breakfast": true,
+            "wifi": true,
+            "parking": true,
+            "pool": true,
+            "gym": false,
+            "spa": false
+        },
+        "share_demand_signals": true,
+        "commission_rate": 0.10,
+        "negotiation_enabled": true,
+        "auto_accept_threshold": 0.85
+    }
+}

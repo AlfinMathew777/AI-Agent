@@ -53,6 +53,11 @@ function App() {
     return <Login onLogin={handleLogin} />;
   }
 
+  // If admin view, render it separately without header/footer
+  if (view === "admin") {
+    return <AdminPage />;
+  }
+
   return (
     <div className="app">
       {/* Top bar / branding */}
@@ -104,7 +109,6 @@ function App() {
         )}
 
         {view === "staff" && <StaffAssistantPage />}
-        {view === "admin" && <AdminPage />}
 
         {/* Tool Pages */}
         {view === "book" && <BookingPage />}
@@ -116,9 +120,7 @@ function App() {
       {/* The Widget lives everywhere (except Admin ideally, but ok everywhere) 
           and handles navigation via onNavigate 
       */}
-      {view !== "admin" && (
-        <ChatWidget onNavigate={setView} />
-      )}
+      <ChatWidget onNavigate={setView} />
 
       {view !== "home" && (
         <footer className="app-footer">

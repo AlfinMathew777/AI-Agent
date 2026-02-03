@@ -234,20 +234,6 @@ async def list_quotes(
         results.append(q)
     return results
 
-@router.get("/admin/receipts")
-async def list_receipts(
-    tenant_id: str = Depends(get_current_tenant)
-):
-    conn = get_db_connection()
-    conn.row_factory = sqlite3.Row
-    query = "SELECT * FROM receipts WHERE tenant_id = ? ORDER BY created_at DESC"
-    rows = conn.execute(query, (tenant_id,)).fetchall()
-    conn.close()
-    
-    results = []
-    for row in rows:
-        r = dict(row)
-        r["breakdown_json"] = json.loads(r["breakdown_json"]) if r["breakdown_json"] else []
-        r["booking_refs_json"] = json.loads(r["booking_refs_json"]) if r["booking_refs_json"] else {}
-        results.append(r)
-    return results
+# Receipts endpoint moved to admin_monitoring.py for better pagination and filtering
+# @router.get("/admin/receipts")
+# async def list_receipts(...) - REMOVED: Use /admin/receipts from admin_monitoring instead

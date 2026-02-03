@@ -88,7 +88,35 @@ class AgentOrchestrator:
             if plan:
                 print(f"[Agent] Plan created with {len(plan.steps)} steps. Mode: {plan.plan_mode}")
                 self.validator.validate_plan(plan)
-                return await self.runner.run_plan(plan)
+                result = await self.runner.run_plan(plan)
+                
+                # Store internal trace if result has plan_id
+                if isinstance(result, dict) and result.get("plan_id"):
+                    from app.db.queries import get_plan
+                    plan_data = get_plan(result["plan_id"])
+                    if plan_data:
+                        import json
+                        internal_trace = {
+                            "plan_id": result["plan_id"],
+                            "session_id": session_id,
+                            "audience": audience,
+                            "question": question,
+                            "plan_summary": plan.plan_summary,
+                            "plan_mode": plan.plan_mode,
+                            "steps": [
+                                {
+                                    "step_index": s.get("step_index"),
+                                    "tool_name": s.get("tool_name"),
+                                    "tool_args": json.loads(s.get("tool_args_json")) if s.get("tool_args_json") else {},
+                                    "status": s.get("status"),
+                                    "result": s.get("result_json")
+                                }
+                                for s in plan_data.get("steps", [])
+                            ]
+                        }
+                        result["_internal_trace"] = json.dumps(internal_trace)
+                
+                return result
         except Exception as e:
             print(f"[Agent] Planning failed (falling back to router): {e}")
             import traceback

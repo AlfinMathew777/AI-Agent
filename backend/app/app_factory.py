@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 import time
 import uuid
-from app.api.routes import health, ask, agent, admin_kb, admin_analytics, admin_commerce, catalog, admin_monitoring
+from app.api.routes import health, ask, agent, admin_kb, admin_analytics, admin_commerce, catalog, admin_monitoring, admin_rooms
 from app.core.structured_logger import get_logger
 
 logger = get_logger("app.middleware")
@@ -27,7 +27,7 @@ def create_app() -> FastAPI:
       allow_origins=["*"],
       allow_credentials=True,
       allow_methods=["*"],
-      allow_headers=["*"],
+      allow_headers=["*", "x-admin-key", "authorization", "x-tenant-id", "Authorization", "X-Tenant-ID", "X-Admin-Key"],
     )
 
     @app.middleware("http")
@@ -71,10 +71,24 @@ def create_app() -> FastAPI:
     app.include_router(admin_analytics.router)
     app.include_router(admin_commerce.router)
     app.include_router(admin_monitoring.router)
+    app.include_router(admin_rooms.router)
     app.include_router(catalog.router)
     
     from app.api.routes import payments, admin_jobs
     app.include_router(payments.router)
     app.include_router(admin_jobs.router)
+    
+    # ACP Gateway
+    from app.acp.protocol.gateway_server import router as acp_router
+    app.include_router(acp_router)
+    
+    # Property management
+    from app.acp.api.routes import properties
+    app.include_router(properties.router)
+    
+    # Agent marketplace
+    from app.acp.api.routes import agents, marketplace
+    app.include_router(agents.router)
+    app.include_router(marketplace.router)
 
     return app

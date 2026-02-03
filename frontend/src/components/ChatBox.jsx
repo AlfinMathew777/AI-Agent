@@ -21,7 +21,10 @@ export default function ChatBox({ endpoint, audience = "guest" }) {
     try {
       return await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "X-Tenant-ID": "default-tenant-0000"
+        },
         body: JSON.stringify(body),
         signal: signal,
       });
@@ -33,7 +36,10 @@ export default function ChatBox({ endpoint, audience = "guest" }) {
         const directUrl = "http://localhost:8002" + url.replace(/^\/api/, '');
         return await fetch(directUrl, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "X-Tenant-ID": "default-tenant-0000"
+          },
           body: JSON.stringify(body),
           signal: signal,
         });
@@ -57,10 +63,20 @@ export default function ChatBox({ endpoint, audience = "guest" }) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-      const payload = {
-        audience: audience,
-        question: userQ
-      };
+      // Determine payload based on endpoint
+      let payload;
+      if (endpoint.includes('/ask/agent')) {
+        // Agent endpoint needs audience
+        payload = {
+          audience: audience || "guest",
+          question: userQ
+        };
+      } else {
+        // Guest/Staff endpoints only need question
+        payload = {
+          question: userQ
+        };
+      }
 
       const response = await makeRequest(endpoint, payload, controller.signal);
       clearTimeout(timeoutId);
