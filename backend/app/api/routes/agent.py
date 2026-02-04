@@ -27,12 +27,20 @@ async def ask_agent(
             tenant_id=tenant_id
         )
         
+        # Ensure response is not None
+        if response is None:
+            response = {"answer": "I'm having trouble processing your request. Please try again.", "status": "error"}
+        
         # Extract internal trace if present
         internal_trace = None
         answer_text = None
         session_id_for_log = payload.session_id
         
         if isinstance(response, dict):
+            # If it's a confirmation request, return it as-is
+            if response.get("status") == "needs_confirmation":
+                return response
+            
             # Check if it has internal trace
             if "_internal_trace" in response:
                 internal_trace = response.pop("_internal_trace")
@@ -45,8 +53,38 @@ async def ask_agent(
             else:
                 answer_text = str(response)
             
+            # Ensure answer_text is a string
+            if not isinstance(answer_text, str):
+                answer_text = str(answer_text)
+            
             # Log to DB with trace (only for successful completions, not confirmation requests)
             if answer_text and response.get("status") in ["success", "completed"]:
+                try:
+                    latency = int((time.time() - start_time) * 1000)
+                    log_chat(
+                        payload.audience, 
+                        payload.question, 
+                        answer_text, 
+                        latency_ms=latency, 
+                        tenant_id=tenant_id,
+                        session_id=session_id_for_log,
+                        internal_trace_json=internal_trace
+                    )
+                except Exception as log_error:
+                    print(f"[Agent] Failed to log chat: {log_error}")
+                    # Don't fail the request if logging fails
+            
+            # Ensure response has required fields
+            if "answer" not in response and "message" not in response:
+                response["answer"] = answer_text
+            if "status" not in response:
+                response["status"] = "success"
+            
+            return response
+        else:
+            # String response - convert to dict format
+            answer_text = str(response) if response else "No response generated"
+            try:
                 latency = int((time.time() - start_time) * 1000)
                 log_chat(
                     payload.audience, 
@@ -55,23 +93,11 @@ async def ask_agent(
                     latency_ms=latency, 
                     tenant_id=tenant_id,
                     session_id=session_id_for_log,
-                    internal_trace_json=internal_trace
+                    internal_trace_json=None
                 )
+            except Exception as log_error:
+                print(f"[Agent] Failed to log chat: {log_error}")
             
-            return response
-        else:
-            # String response
-            answer_text = str(response)
-            latency = int((time.time() - start_time) * 1000)
-            log_chat(
-                payload.audience, 
-                payload.question, 
-                answer_text, 
-                latency_ms=latency, 
-                tenant_id=tenant_id,
-                session_id=session_id_for_log,
-                internal_trace_json=None
-            )
             return {"answer": answer_text, "status": "success"}
 
     except Exception as e:

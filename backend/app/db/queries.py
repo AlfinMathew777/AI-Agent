@@ -126,26 +126,32 @@ def get_analytics_stats():
         print(f"[Database] Error getting analytics: {e}")
         return {}
 
-def create_booking(guest_name, room_type, date, status="confirmed"):
+def create_booking(guest_name, room_type, date, status="confirmed", tenant_id=None):
     """Create a new booking in the DB."""
     try:
+        if not tenant_id:
+            tenant_id = "default-tenant-0000"
         booking_id = f"BK-{int(time.time())}"
         conn = get_db_connection()
         c = conn.cursor()
         c.execute('''
-            INSERT INTO bookings (booking_id, guest_name, room_type, date, status)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (booking_id, guest_name, room_type, date, status))
+            INSERT INTO bookings (booking_id, guest_name, room_type, date, status, tenant_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (booking_id, guest_name, room_type, date, status, tenant_id))
         conn.commit()
         conn.close()
         return booking_id
     except Exception as e:
         print(f"[Database] Error creating booking: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
-def check_room_availability(room_type, date):
+def check_room_availability(room_type, date, tenant_id=None):
     """Check if a room type is available on a given date."""
     try:
+        if not tenant_id:
+            tenant_id = "default-tenant-0000"
         # Normalize room type
         normalized_type = room_type.strip().lower()
         capacity = ROOM_CAPACITY.get(normalized_type, DEFAULT_ROOM_CAPACITY)
@@ -153,11 +159,11 @@ def check_room_availability(room_type, date):
         conn = get_db_connection()
         c = conn.cursor()
         
-        # Count confirmed bookings
+        # Count confirmed bookings for this tenant
         c.execute('''
             SELECT COUNT(*) FROM bookings 
-            WHERE lower(room_type) = ? AND date = ? AND status = 'confirmed'
-        ''', (normalized_type, date))
+            WHERE lower(room_type) = ? AND date = ? AND status = 'confirmed' AND tenant_id = ?
+        ''', (normalized_type, date, tenant_id))
         count = c.fetchone()[0]
         conn.close()
         
@@ -166,17 +172,22 @@ def check_room_availability(room_type, date):
         
     except Exception as e:
         print(f"[Database] Error checking availability: {e}")
+        import traceback
+        traceback.print_exc()
         return False, 0, 0
 
-def get_bookings(date_filter=None, room_type=None, status_filter=None, limit=50, offset=0, order="desc"):
+def get_bookings(date_filter=None, room_type=None, status_filter=None, limit=50, offset=0, order="desc", tenant_id=None):
     """Get bookings with filters and stats."""
     try:
+        if not tenant_id:
+            tenant_id = "default-tenant-0000"
         conn = get_db_connection()
+        conn.row_factory = sqlite3.Row
         c = conn.cursor()
         
         # 1. Build Base Filter Clause
-        conditions = []
-        params = []
+        conditions = ["tenant_id = ?"]
+        params = [tenant_id]
         
         if date_filter:
             conditions.append("date = ?")
@@ -188,7 +199,7 @@ def get_bookings(date_filter=None, room_type=None, status_filter=None, limit=50,
             conditions.append("status = ?")
             params.append(status_filter)
             
-        where_clause = " WHERE " + " AND ".join(conditions) if conditions else ""
+        where_clause = " WHERE " + " AND ".join(conditions)
         
         # 2. Main Query
         query = f"SELECT * FROM bookings{where_clause}"

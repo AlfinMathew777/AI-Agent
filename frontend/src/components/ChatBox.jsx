@@ -19,7 +19,7 @@ export default function ChatBox({ endpoint, audience = "guest" }) {
   // Helper to make requests (handles proxy fallback)
   async function makeRequest(url, body, signal) {
     try {
-      return await fetch(url, {
+      const response = await fetch(url, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -28,12 +28,11 @@ export default function ChatBox({ endpoint, audience = "guest" }) {
         body: JSON.stringify(body),
         signal: signal,
       });
-    } catch (proxyError) {
-      console.warn("Proxy connection failed, trying direct connection...", proxyError);
-      // Fallback: Try hitting port 8002 directly
-      // Only if url starts with /api
-      if (url.startsWith('/api')) {
-        const directUrl = "http://localhost:8002" + url.replace(/^\/api/, '');
+      
+      // If proxy returns an error, try direct connection
+      if (!response.ok && url.startsWith('/api')) {
+        console.warn("Proxy returned error, trying direct connection...", response.status);
+        const directUrl = "http://127.0.0.1:8010" + url.replace(/^\/api/, '');
         return await fetch(directUrl, {
           method: "POST",
           headers: { 
@@ -43,6 +42,29 @@ export default function ChatBox({ endpoint, audience = "guest" }) {
           body: JSON.stringify(body),
           signal: signal,
         });
+      }
+      
+      return response;
+    } catch (proxyError) {
+      console.warn("Proxy connection failed, trying direct connection...", proxyError);
+      // Fallback: Try hitting port 8010 directly
+      // Only if url starts with /api
+      if (url.startsWith('/api')) {
+        const directUrl = "http://127.0.0.1:8010" + url.replace(/^\/api/, '');
+        try {
+          return await fetch(directUrl, {
+            method: "POST",
+            headers: { 
+              "Content-Type": "application/json",
+              "X-Tenant-ID": "default-tenant-0000"
+            },
+            body: JSON.stringify(body),
+            signal: signal,
+          });
+        } catch (directError) {
+          console.error("Direct connection also failed:", directError);
+          throw new Error(`Connection failed: ${directError.message}`);
+        }
       }
       throw proxyError;
     }
@@ -106,7 +128,9 @@ export default function ChatBox({ endpoint, audience = "guest" }) {
       console.error("Chat Error:", err);
       let errorMessage = "Sorry, I'm having trouble connecting. Please try again.";
       if (err.name === "AbortError") {
-        errorMessage = "Request timed out.";
+        errorMessage = "Request timed out. Please try again.";
+      } else if (err.message) {
+        errorMessage = err.message;
       }
       setMessages((prev) => [...prev, { sender: "ai", text: `⚠️ ${errorMessage}` }]);
     } finally {

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Clear Admin Cache</title>
+</head>
+
+<body>
+    <h1>Clearing Admin Cache...</h1>
+    <p id="status">Please wait...</p>
+    <script>
+        // Clear all localStorage
+        localStorage.clear();
+
+        // Clear sessionStorage
+        sessionStorage.clear();
+
+        // Show success message
+        document.getElementById('status').innerHTML =
+            '✅ Cache cleared successfully!<br><br>' +
+            '<strong>Next steps:</strong><br>' +
+            '1. Close this tab<br>' +
+            '2. Open a new tab<br>' +
+            '3. Go to: <a href="http://localhost:5174">http://localhost:5174</a><br>' +
+            '4. Navigate to Admin page<br>' +
+            '5. You should see the login screen!';
+
+        console.log('✅ All localStorage and sessionStorage cleared');
+    </script>
+</body>
+
+</html>

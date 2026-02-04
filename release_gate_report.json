@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-02-03T15:53:48.996475",
+  "version": "1.0.0",
+  "suites": {
+    "01_contract_endpoints": {
+      "file": "test_01_contract_endpoints.py",
+      "passed": false,
+      "returncode": 1,
+      "tests_passed": 0,
+      "tests_failed": 4,
+      "tests_skipped": 0,
+      "output_snippet": "-Options': 'nosniff', 'Content-Length': '18819', 'Content-Encoding': 'gzip', 'Vary': 'Accept-Encoding, Cookie', 'Connection': 'Keep-Alive', 'Set-Cookie': 'session_id_8000=a609a671e98c57c3bbe320d6676ab300a8666e72; expires=Tue, 03 Feb 2026 05:53:54 GMT; HttpOnly; Max-Age=3600; Path=/', 'Server': 'Splunkd')>\\n.status\n=========================== short test summary info ===========================\nFAILED tests/test_01_contract_endpoints.py::test_agent_register_contract - Fa...\nFAILED tests/test_01_contract_endpoints.py::test_submit_discover_contract - A...\nFAILED tests/test_01_contract_endpoints.py::test_submit_negotiate_contract - ...\nFAILED tests/test_01_contract_endpoints.py::test_submit_execute_dry_run_contract\n============================== 4 failed in 1.42s ==============================\n"
+    },
+    "02_safety_features": {
+      "file": "test_02_safety_features.py",
+      "passed": false,
+      "returncode": 1,
+      "tests_passed": 1,
+      "tests_failed": 1,
+      "tests_skipped": 1,
+      "output_snippet": "status: 404\nE   assert 404 in [200, 201, 400]\nE    +  where 404 = <ClientResponse(http://localhost:8000/en-US/acp/submit) [404 Not Found]>\\n<CIMultiDictProxy('Date': 'Tue, 03 Feb 2026 04:53:55 GMT', 'Content-Type': 'text/html', 'X-Content-Type-Options': 'nosniff', 'Content-Length': '18818', 'Content-Encoding': 'gzip', 'Vary': 'Accept-Encoding, Cookie', 'Connection': 'Keep-Alive', 'Set-Cookie': 'session_id_8000=48f426511bc66f773dfeaa025776a4400b0e4f0a; expires=Tue, 03 Feb 2026 05:53:55 GMT; HttpOnly; Max-Age=3600; Path=/', 'Server': 'Splunkd')>\\n.status\n=========================== short test summary info ===========================\nFAILED tests/test_02_safety_features.py::test_execute_dry_run_safe - Assertio...\n=================== 1 failed, 1 passed, 1 skipped in 0.86s ====================\n"
+    },
+    "03_idempotency": {
+      "file": "test_03_idempotency.py",
+      "passed": false,
+      "returncode": 1,
+      "tests_passed": 0,
+      "tests_failed": 3,
+      "tests_skipped": 0,
+      "output_snippet": "bbaae2; expires=Tue, 03 Feb 2026 05:53:57 GMT; HttpOnly; Max-Age=3600; Path=/', 'Server': 'Splunkd')>\\n.status\n______________________ test_idempotency_database_schema _______________________\ntests\\test_03_idempotency.py:132: in test_idempotency_database_schema\n    pytest.fail(\"\\u274c CRITICAL: idempotency_log table missing\")\nE   Failed: \\u274c CRITICAL: idempotency_log table missing\n=========================== short test summary info ===========================\nFAILED tests/test_03_idempotency.py::test_idempotency_duplicate_returns_cached_result\nFAILED tests/test_03_idempotency.py::test_idempotency_different_request_ids_not_shared\nFAILED tests/test_03_idempotency.py::test_idempotency_database_schema - Faile...\n============================== 3 failed in 0.90s ==============================\n"
+    },
+    "04_database_schema": {
+      "file": "test_04_database_schema.py",
+      "passed": false,
+      "returncode": 1,
+      "tests_passed": 2,
+      "tests_failed": 4,
+      "tests_skipped": 0,
+      "output_snippet": "'amount'}\n______________ TestDatabaseSchema.test_idempotency_table_exists _______________\ntests\\test_04_database_schema.py:166: in test_idempotency_table_exists\n    pytest.fail(\"\\u274c CRITICAL: idempotency_log table missing\")\nE   Failed: \\u274c CRITICAL: idempotency_log table missing\n=========================== short test summary info ===========================\nFAILED tests/test_04_database_schema.py::TestDatabaseSchema::test_properties_schema_minimum\nFAILED tests/test_04_database_schema.py::TestDatabaseSchema::test_trust_agents_schema\nFAILED tests/test_04_database_schema.py::TestDatabaseSchema::test_commissions_schema\nFAILED tests/test_04_database_schema.py::TestDatabaseSchema::test_idempotency_table_exists\n========================= 4 failed, 2 passed in 0.09s =========================\n"
+    }
+  },
+  "critical_failures": [],
+  "warnings": [],
+  "decision": "NO-GO",
+  "reason": "Critical suites failed: 01_contract_endpoints, 02_safety_features, 03_idempotency, 04_database_schema",
+  "path_discovery": {
+    "executed": true,
+    "output": "============================= test session starts =============================\ncollecting ... collected 4 items\n\ntests/test_00_probes_paths.py::test_probe_agent_registration_paths PASSED [ 25%]\ntests/test_00_probes_paths.py::test_probe_marketplace_paths PASSED       [ 50%]\ntests/test_00_probes_paths.py::test_probe_monitoring_paths PASSED        [ 75%]\ntests/test_00_probes_paths.py::test_probe_submit_paths PASSED            [100%]\n\n============================== 4 passed in 2.45s ==============================\n"
+  }
+}

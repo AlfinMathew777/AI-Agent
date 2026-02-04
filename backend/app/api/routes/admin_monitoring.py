@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Optional
 from app.api.deps import verify_admin_role, get_current_tenant, get_tenant_header
+from app.core.security.admin import verify_admin
 from app.db.admin_queries import (
     get_chat_history, get_chat_thread, get_operations_summary, 
     get_recent_operations, get_payment_transactions, get_receipts_list,
@@ -11,7 +12,7 @@ import sqlite3
 
 router = APIRouter()
 
-@router.get("/admin/chats")
+@router.get("/admin/chats", dependencies=[Depends(verify_admin)])
 async def get_chat_history_endpoint(
     tenant_id: str = Depends(get_tenant_header),  # Allow header-based for testing
     audience: Optional[str] = Query(None, description="Filter by audience: guest or staff"),
@@ -30,7 +31,7 @@ async def get_chat_history_endpoint(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/admin/chats/thread")
+@router.get("/admin/chats/thread", dependencies=[Depends(verify_admin)])
 async def get_chat_thread_endpoint(
     session_id: str = Query(..., description="Session ID to get thread for"),
     tenant_id: str = Depends(get_tenant_header)
@@ -43,7 +44,7 @@ async def get_chat_thread_endpoint(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/admin/operations")
+@router.get("/admin/operations", dependencies=[Depends(verify_admin)])
 async def get_operations_summary_endpoint(
     tenant_id: str = Depends(get_tenant_header)
 ):
@@ -60,7 +61,7 @@ async def get_operations_summary_endpoint(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/admin/payments")
+@router.get("/admin/payments", dependencies=[Depends(verify_admin)])
 async def get_payments_endpoint(
     tenant_id: str = Depends(get_tenant_header),
     status: Optional[str] = Query(None, description="Filter by status: paid, pending, failed"),
@@ -80,7 +81,7 @@ async def get_payments_endpoint(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/admin/receipts")
+@router.get("/admin/receipts", dependencies=[Depends(verify_admin)])
 async def get_receipts_endpoint(
     tenant_id: str = Depends(get_tenant_header),
     date_from: Optional[str] = Query(None),
@@ -101,7 +102,7 @@ async def get_receipts_endpoint(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/admin/system/status")
+@router.get("/admin/system/status", dependencies=[Depends(verify_admin)])
 async def get_system_status():
     """Get system health status and recent errors."""
     try:

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from datetime import datetime
 from app.core.security.admin import verify_admin
+from app.api.deps import get_tenant_header
 from app.db.queries import get_analytics_stats, get_bookings, get_tool_stats
 
 router = APIRouter()
@@ -18,7 +19,8 @@ async def list_bookings(
     status: str = Query(None, description="Filter by booking status"),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
-    order: str = Query("desc", regex="^(asc|desc)$")
+    order: str = Query("desc", regex="^(asc|desc)$"),
+    tenant_id: str = Depends(get_tenant_header)
 ):
     """List bookings with filters."""
     # Optional date validation
@@ -34,7 +36,8 @@ async def list_bookings(
         status_filter=status,
         limit=limit,
         offset=offset,
-        order=order
+        order=order,
+        tenant_id=tenant_id
     )
     
     return data

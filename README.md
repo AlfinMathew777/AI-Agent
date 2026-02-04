@@ -97,8 +97,18 @@ python -m pytest tests/
 
 ## 📚 Documentation
 
-- [RUNBOOK.md](backend/docs/RUNBOOK.md) - Deployment guide
-- [workflows.md](backend/docs/workflows.md) - Development workflows
+**Complete Documentation**: [DOCS_INDEX.md](DOCS_INDEX.md) - Master documentation index
+
+**Quick Access**:
+- [Quick Start Guide](QUICK_START.md) - Get running quickly
+- [Project Blueprint](docs/implementation/PROJECT_BLUEPRINT.md) - System architecture
+- [Testing Guide](docs/testing/TESTING_GUIDE.md) - How to test
+- [Setup Guide](docs/setup/QUICKSTART_SERVER.md) - Server configuration
+
+**Workspace Navigation**: 
+- [PROJECT INDEX](../PROJECT_INDEX.md) - Navigate entire workspace
+- [Claude Plugins Guide](../CLAUDE_PLUGINS_GUIDE.md) - Development tools and plugins
+- [Agent Workflows](../.agent/workflows/) - Automation workflows
 
 ## 🛠️ Tech Stack
 
