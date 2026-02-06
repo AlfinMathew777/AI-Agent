@@ -1,20 +1,15 @@
-/* ChatWidget.css */
+/* ChatWidget.css - Premium Edition */
 
 :root {
-    --monica-bg: #ffffff;
-    /* Pure White */
-    --monica-surface: #f9fafb;
-    /* Gray-50 */
-    --monica-text: #1f2937;
-    /* Gray-800 */
-    --monica-subtext: #6b7280;
-    /* Gray-500 */
-    --monica-accent: #6366f1;
-    /* Indigo-500 */
-    --monica-border: #e5e7eb;
-    /* Gray-200 */
-    --monica-hover: #f3f4f6;
-    /* Gray-100 */
+    /* Map to Premium System */
+    --monica-bg: var(--bg-card, #ffffff);
+    --monica-surface: var(--bg-page, #f9fafb);
+    --monica-text: var(--text-main, #1f2937);
+    --monica-subtext: var(--text-muted, #6b7280);
+    --monica-accent: var(--gold, #c6a87c);
+    /* GOLD ACCENT */
+    --monica-border: rgba(0, 0, 0, 0.1);
+    --monica-hover: rgba(198, 168, 124, 0.1);
 }
 
 /* Floating Action Button */
@@ -25,9 +20,10 @@
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--monica-accent), #8b5cf6);
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-    border: none;
+    /* Luxury Gradient */
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    box-shadow: 0 4px 20px rgba(198, 168, 124, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     cursor: pointer;
     z-index: 1000;
     display: flex;
@@ -39,11 +35,13 @@
 
 .chat-fab:hover {
     transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+    box-shadow: 0 6px 25px rgba(198, 168, 124, 0.6);
 }
 
 .fab-icon {
     font-size: 1.8rem;
+    color: white;
+    /* Icon is white */
     filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
 }
 
@@ -64,18 +62,17 @@
     position: fixed;
     top: 0;
     right: -450px;
-    /* Hidden */
     width: 400px;
     height: 100vh;
-    background: var(--monica-bg);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
     color: var(--monica-text);
-    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.08);
-    /* Soft shadow */
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.1);
     z-index: 1001;
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: var(--font-body);
 }
 
 .chat-sidebar.open {
@@ -88,9 +85,9 @@
     height: 90vh;
     top: 5vh;
     right: 5vw;
-    border-radius: 24px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 /* Header */
@@ -100,19 +97,17 @@
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--monica-border);
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(10px);
-    border-radius: 24px 24px 0 0;
-    /* Relevant in full page mode */
+    background: transparent;
 }
 
 .header-title h2 {
     margin: 0;
+    font-family: var(--font-display);
     font-size: 1.5rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, #4f46e5, #9333ea);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    font-weight: 600;
+    color: var(--primary);
+    background: none;
+    -webkit-text-fill-color: initial;
 }
 
 .icon-btn {
@@ -128,25 +123,25 @@
 
 .icon-btn:hover {
     background: var(--monica-hover);
-    color: var(--monica-text);
+    color: var(--gold);
 }
 
 /* Tools Grid */
 .monica-tools {
     padding: 1.25rem 1.5rem;
     border-bottom: 1px solid var(--monica-border);
-    background: var(--monica-surface);
+    background: rgba(249, 250, 251, 0.5);
 }
 
 .tools-label {
-    font-size: 0.85rem;
-    color: var(--monica-subtext);
+    font-size: 0.75rem;
+    color: var(--gold-dark);
     font-weight: 600;
     margin-bottom: 1rem;
     display: flex;
     justify-content: space-between;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.1em;
 }
 
 .more-link {
@@ -166,22 +161,23 @@
 .tool-item {
     background: white;
     border: 1px solid var(--monica-border);
-    border-radius: 16px;
+    border-radius: 8px;
+    /* Sharper */
     padding: 12px 6px;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 8px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
 }
 
 .tool-item:hover {
     background: white;
     transform: translateY(-3px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-    border-color: var(--monica-accent);
+    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+    border-color: var(--gold);
 }
 
 .tool-icon {
@@ -189,9 +185,11 @@
 }
 
 .tool-name {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--monica-text);
     font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 /* Chat Content Area */
@@ -200,7 +198,7 @@
     overflow: hidden;
     background: white;
     position: relative;
-    border-radius: 0 0 24px 24px;
+    border-radius: 0 0 12px 12px;
 }
 
 /* Backdrop */
@@ -210,8 +208,8 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.2);
-    /* Lighter dim */
+    background: rgba(15, 23, 42, 0.6);
+    /* Navy Dim */
     backdrop-filter: blur(4px);
     z-index: 999;
 }

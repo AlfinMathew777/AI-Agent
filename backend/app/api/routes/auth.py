@@ -6,6 +6,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from app.db.session import get_db_connection
 from app.core.security.auth import verify_password, get_password_hash, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.schemas.auth import UserCreate, UserRead, Token, TenantCreate, TenantRead, UserLogin
+from app.core.errors import handle_errors, UnauthorizedError, DatabaseError
 
 router = APIRouter()
 
@@ -54,31 +55,56 @@ async def register(payload: UserCreate):
     )
 
 @router.post("/auth/login", response_model=Token)
+@handle_errors
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    """
+    Authenticate a user by email/username and password.
+
+    On success, returns a JWT access token; on failure, raises an appropriate
+    HotelAPIError that will be converted into a consistent JSON error response
+    by the @handle_errors decorator.
+    """
     conn = get_db_connection()
     conn.row_factory = sqlite3.Row
-    c = conn.cursor()
-    
-    c.execute("SELECT * FROM users WHERE email = ?", (form_data.username,))
-    user = c.fetchone()
-    conn.close()
-    
-    if not user or not verify_password(form_data.password, user['password_hash']):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM users WHERE email = ?", (form_data.username,))
+        user = cur.fetchone()
+
+        # Don’t reveal whether the email exists – return the same message on failure
+        if not user:
+            raise UnauthorizedError("Incorrect email or password")
+
+        # Verify the submitted password against the stored hash
+        if not verify_password(form_data.password, user["password_hash"]):
+            raise UnauthorizedError("Incorrect email or password")
+
+        # Create JWT access token with custom claims
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={
+                "sub": str(user["id"]),
+                "tenant_id": str(user["tenant_id"]),
+                "role": user["role"],
+            },
+            expires_delta=access_token_expires,
         )
-        
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user['id'], "tenant_id": user['tenant_id'], "role": user['role']},
-        expires_delta=access_token_expires
-    )
-    
-    return Token(
-        access_token=access_token, 
-        token_type="bearer", 
-        role=user['role'],
-        tenant_id=user['tenant_id']
-    )
+
+        # Return only the fields defined on the Token schema
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "role": user["role"],
+            "tenant_id": user["tenant_id"],
+        }
+
+    except sqlite3.Error as db_error:
+        # Wrap database errors so your error handler can format them consistently
+        raise DatabaseError(str(db_error), operation="login") from db_error
+    except Exception as e:
+        import traceback
+        print("[Auth] Login failed:", repr(e))
+        traceback.print_exc()
+        raise e
+    finally:
+        conn.close()

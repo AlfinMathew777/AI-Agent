@@ -21,21 +21,21 @@ export default function ChatBox({ endpoint, audience = "guest" }) {
     try {
       const response = await fetch(url, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "X-Tenant-ID": "default-tenant-0000"
         },
         body: JSON.stringify(body),
         signal: signal,
       });
-      
+
       // If proxy returns an error, try direct connection
       if (!response.ok && url.startsWith('/api')) {
         console.warn("Proxy returned error, trying direct connection...", response.status);
-        const directUrl = "http://127.0.0.1:8010" + url.replace(/^\/api/, '');
+        const directUrl = "http://127.0.0.1:8011" + url.replace(/^\/api/, '');
         return await fetch(directUrl, {
           method: "POST",
-          headers: { 
+          headers: {
             "Content-Type": "application/json",
             "X-Tenant-ID": "default-tenant-0000"
           },
@@ -43,18 +43,23 @@ export default function ChatBox({ endpoint, audience = "guest" }) {
           signal: signal,
         });
       }
-      
+
       return response;
     } catch (proxyError) {
+      // If the original request was aborted (e.g. timeout), we CANNOT retry with the same signal
+      if (signal && signal.aborted) {
+        throw proxyError;
+      }
+
       console.warn("Proxy connection failed, trying direct connection...", proxyError);
-      // Fallback: Try hitting port 8010 directly
+      // Fallback: Try hitting port 8011 directly
       // Only if url starts with /api
       if (url.startsWith('/api')) {
-        const directUrl = "http://127.0.0.1:8010" + url.replace(/^\/api/, '');
+        const directUrl = "http://127.0.0.1:8011" + url.replace(/^\/api/, '');
         try {
           return await fetch(directUrl, {
             method: "POST",
-            headers: { 
+            headers: {
               "Content-Type": "application/json",
               "X-Tenant-ID": "default-tenant-0000"
             },

@@ -39,30 +39,7 @@ const btnStyle = {
 
 // --- Pages ---
 
-export function BookingPage() {
-    return (
-        <div style={pageStyle}>
-            <h1 style={headerStyle}>📅 Book Your Stay</h1>
-            <div style={cardStyle}>
-                <h3>Check Availability</h3>
-                <p style={{ marginBottom: '1rem', color: '#6b7280' }}>Find the perfect room for your next escape.</p>
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '1rem' }}>
-                    <input type="date" style={{ padding: '10px', borderRadius: '8px', border: '1px solid #d1d5db' }} />
-                    <input type="date" style={{ padding: '10px', borderRadius: '8px', border: '1px solid #d1d5db' }} />
-                    <button style={btnStyle}>Search Rooms</button>
-                </div>
-            </div>
-
-            <div style={cardStyle}>
-                <h3>Current Offers</h3>
-                <ul style={{ paddingLeft: '1.5rem', color: '#4b5563' }}>
-                    <li><strong>Weekend Escape:</strong> Stay 2 nights, save 15%.</li>
-                    <li><strong>Romance Package:</strong> Includes champagne & late checkout.</li>
-                </ul>
-            </div>
-        </div>
-    );
-}
+// BookingPage moved to separate file: ./BookingPage.jsx
 
 export function GuidePage() {
     return (

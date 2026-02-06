@@ -5,7 +5,8 @@ import AdminPage from "./components/AdminPage.jsx";
 import LandingPage from "./components/LandingPage.jsx";
 import ChatWidget from "./components/ChatWidget.jsx";
 import Login from "./components/Login.jsx";
-import { BookingPage, GuidePage, WiFiPage, ReceptionPage } from "./components/ToolPages.jsx";
+import BookingPage from "./components/BookingPage.jsx";
+import { GuidePage, WiFiPage, ReceptionPage } from "./components/ToolPages.jsx";
 
 // Configure Global Fetch Interceptor to add Token
 const originalFetch = window.fetch;
@@ -31,16 +32,24 @@ window.fetch = async (...args) => {
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [view, setView] = useState("home"); // "home" | "staff" | "admin" | ...
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     // If we have a token but receive 401, we should probably logout.
     // For now, rely on manual logout.
   }, [token]);
 
-  const handleLogin = (newToken) => {
+  const handleLogin = (newToken, role) => {
     localStorage.setItem('token', newToken);
     setToken(newToken);
-    setView("home");
+    setShowLoginModal(false);
+
+    // Redirect based on role, defaulting to staff portal
+    if (role === 'admin' || role === 'owner') {
+      setView("admin");
+    } else {
+      setView("staff");
+    }
   };
 
   const handleLogout = () => {
@@ -49,69 +58,88 @@ function App() {
     setView("home");
   };
 
-  if (!token) {
-    return <Login onLogin={handleLogin} />;
-  }
+  const handleStaffLoginClick = () => {
+    console.log("Staff login clicked");
+    setShowLoginModal(true);
+  };
 
   // If admin view, render it separately without header/footer
-  if (view === "admin") {
-    return <AdminPage />;
+  // Protect Admin Route
+  // Protect Admin Route: Just ensure token exists, but let it render in main layout
+  if (view === "admin" && !token) {
+    return <Login onLogin={(t, role) => { handleLogin(t, role); setView("admin"); }} />;
   }
+
+  // If staff view is requested but no token, show login
+  if (view === "staff" && !token) {
+    // Use the modal or the full page login. 
+    // Since the UI structure expects specific views, let's just trigger the modal logic
+    // by showing the Login component directly here temporarily.
+    return <Login onLogin={(t, role) => { handleLogin(t, role); setView("staff"); }} />;
+  }
+
+  // Check if we should show the global app header (Nav with Staff Portal button)
+  const showGlobalHeader = view !== "book" && view !== "home";
 
   return (
     <div className="app">
       {/* Top bar / branding */}
-      <header className="app-header">
-        <div className="brand">
-          <span className="brand-title">Southern Horizons Hotel</span>
-          <span className="brand-subtitle">
-            AI Concierge & Staff Assistant
-          </span>
-        </div>
+      {/* Top bar / branding - Only shown for authenticated staff views */}
+      {showGlobalHeader && (
+        <header className="app-header">
+          <div className="brand">
+            <span className="brand-title">Southern Horizons Hotel</span>
+            <span className="brand-subtitle">
+              AI Concierge & Staff Assistant
+            </span>
+          </div>
 
-        <nav className="nav">
-          <button
-            className={view === "home" ? "nav-btn active" : "nav-btn"}
-            onClick={() => setView("home")}
-          >
-            Hotel Website
-          </button>
+          <nav className="nav">
+            <button
+              className={view === "home" ? "nav-btn active" : "nav-btn"}
+              onClick={() => setView("home")}
+            >
+              Hotel Website
+            </button>
 
-          <button
-            className={view === "staff" ? "nav-btn active" : "nav-btn"}
-            onClick={() => setView("staff")}
-          >
-            Staff Portal
-          </button>
+            <button
+              className={view === "staff" ? "nav-btn active" : "nav-btn"}
+              onClick={() => setView("staff")}
+            >
+              Staff Portal
+            </button>
 
-          <button
-            className="nav-btn"
-            onClick={handleLogout}
-            style={{ marginLeft: "10px", border: "1px solid #ccc", background: "transparent" }}
-          >
-            Logout
-          </button>
+            <button
+              className="nav-btn"
+              onClick={handleLogout}
+              style={{ marginLeft: "10px", border: "1px solid #ccc", background: "transparent" }}
+            >
+              Logout
+            </button>
 
-          <button
-            className={view === "admin" ? "nav-btn active bg-admin" : "nav-btn bg-admin"}
-            onClick={() => setView("admin")}
-            style={{ marginLeft: "20px", border: "1px solid var(--accent-gold)" }}
-          >
-            ⚙️ Admin
-          </button>
-        </nav>
-      </header>
+            <button
+              className={view === "admin" ? "nav-btn active bg-admin" : "nav-btn bg-admin"}
+              onClick={() => setView("admin")}
+              style={{ marginLeft: "20px", border: "1px solid var(--accent-gold)" }}
+            >
+              ⚙️ Admin
+            </button>
+          </nav>
+        </header>
+      )}
 
       {/* Main content area */}
       <main className="app-main" style={{ maxWidth: view === "home" ? "100%" : "1000px", padding: view === "home" ? "0" : "3rem 2rem" }}>
         {view === "home" && (
-          <LandingPage onNavigate={setView} />
+          <LandingPage onNavigate={setView} onStaffLogin={handleStaffLoginClick} />
         )}
+
+        {view === "admin" && <AdminPage />}
 
         {view === "staff" && <StaffAssistantPage />}
 
         {/* Tool Pages */}
-        {view === "book" && <BookingPage />}
+        {view === "book" && <BookingPage onBack={() => setView("home")} />}
         {view === "guide" && <GuidePage />}
         {view === "wifi" && <WiFiPage />}
         {view === "reception" && <ReceptionPage />}
@@ -121,6 +149,15 @@ function App() {
           and handles navigation via onNavigate 
       */}
       <ChatWidget onNavigate={setView} />
+
+      {/* Login Modal for Staff/Admin Access */}
+      {showLoginModal && (
+        <Login
+          onLogin={handleLogin}
+          isModal={true}
+          onClose={() => setShowLoginModal(false)}
+        />
+      )}
 
       {view !== "home" && (
         <footer className="app-footer">

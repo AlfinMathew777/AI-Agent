@@ -40,14 +40,18 @@ async def ask_guest(
     raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.post("/ask/staff", response_model=AnswerResponse)
-async def ask_staff(payload: QuestionRequest):
+async def ask_staff(
+    payload: QuestionRequest,
+    tenant_id: str = Depends(get_tenant_header)
+):
   start_time = time.time()
   try:
-    answer = await get_staff_answer(payload.question)
+    answer = await get_staff_answer(payload.question, tenant_id=tenant_id)
     
-    # Log to DB
+    # Log to DB with tenant_id
     latency = int((time.time() - start_time) * 1000)
-    log_chat("staff", payload.question, answer, latency_ms=latency)
+    answer_text = answer if isinstance(answer, str) else str(answer)
+    log_chat("staff", payload.question, answer_text, latency_ms=latency, tenant_id=tenant_id, session_id=None)
     
     return AnswerResponse(
       role="staff",

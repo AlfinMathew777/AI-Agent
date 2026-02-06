@@ -37,7 +37,7 @@ async def ask_agent(
         session_id_for_log = payload.session_id
         
         if isinstance(response, dict):
-            # If it's a confirmation request, return it as-is
+            # If it's a confirmation request, return it as-is (don't log confirmation requests)
             if response.get("status") == "needs_confirmation":
                 return response
             
@@ -57,8 +57,9 @@ async def ask_agent(
             if not isinstance(answer_text, str):
                 answer_text = str(answer_text)
             
-            # Log to DB with trace (only for successful completions, not confirmation requests)
-            if answer_text and response.get("status") in ["success", "completed"]:
+            # Log to DB with trace (log all responses except confirmation requests)
+            # Only skip logging if it's explicitly a confirmation request
+            if answer_text:
                 try:
                     latency = int((time.time() - start_time) * 1000)
                     log_chat(

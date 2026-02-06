@@ -12,6 +12,7 @@ from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 import logging
 import traceback
+import inspect
 from typing import Optional, Dict, Any
 
 logger = logging.getLogger(__name__)
@@ -99,70 +100,52 @@ class ExternalServiceError(HotelAPIError):
 def handle_errors(func):
     """
     Decorator to catch and properly handle all errors in API routes.
-    
-    Usage:
-        @router.get("/endpoint")
-        @handle_errors
-        async def my_endpoint():
-            # Your code here
-    
-    This will:
-    - Catch all exceptions
-    - Log them with proper context
-    - Return consistent error responses
-    - Prevent information leakage in production
+    Works with both async and sync route functions.
     """
-    
     @wraps(func)
     async def wrapper(*args, **kwargs):
         try:
-            return await func(*args, **kwargs)
-            
+            result = func(*args, **kwargs)
+            if inspect.isawaitable(result):
+                return await result
+            return result
         except HotelAPIError as e:
-            # Our custom errors - log and return
             logger.error(
                 f"{func.__name__} failed: {e.message}",
                 extra={
                     "error_code": e.error_code,
                     "status_code": e.status_code,
                     "details": e.details,
-                    "function": func.__name__
-                }
+                    "function": func.__name__,
+                },
             )
             raise HTTPException(
                 status_code=e.status_code,
                 detail={
                     "error": e.message,
                     "code": e.error_code,
-                    "details": e.details
-                }
+                    "details": e.details,
+                },
             )
-            
         except HTTPException:
-            # FastAPI exceptions - let them through
             raise
-            
         except Exception as e:
-            # Unexpected errors - log with full traceback
             logger.exception(
                 f"Unexpected error in {func.__name__}: {str(e)}",
                 extra={
                     "function": func.__name__,
                     "error_type": type(e).__name__,
-                    "traceback": traceback.format_exc()
-                }
+                    "traceback": traceback.format_exc(),
+                },
             )
-            
-            # Don't leak internal errors in production
             raise HTTPException(
                 status_code=500,
                 detail={
                     "error": "An internal error occurred",
                     "code": "INTERNAL_ERROR",
-                    "details": {}
-                }
+                    "details": {},
+                },
             )
-    
     return wrapper
 
 

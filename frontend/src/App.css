@@ -1,4 +1,4 @@
-/* src/App.css */
+/* src/App.css - Premium Header & Layout */
 
 .app {
   min-height: 100vh;
@@ -10,13 +10,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.2rem 3rem;
-  background: white;
-  border-bottom: 1px solid #e1e4e8;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  padding: 1rem 3rem;
+  background: var(--primary-dark);
+  /* Dark Luxury Header */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 100;
+  backdrop-filter: blur(10px);
 }
 
 .brand {
@@ -25,80 +27,83 @@
 }
 
 .brand-title {
-  font-family: var(--font-heading);
+  font-family: var(--font-display);
   font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--primary);
-  letter-spacing: -0.02em;
+  font-weight: 500;
+  color: white;
+  /* White on Dark */
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .brand-subtitle {
-  font-size: 0.75rem;
-  color: var(--accent);
-  font-weight: 600;
+  font-size: 0.7rem;
+  color: var(--gold);
+  font-weight: 400;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-top: 2px;
+  letter-spacing: 0.2em;
+  margin-top: 4px;
 }
 
 .nav {
   display: flex;
-  gap: 0.75rem;
-  background: #f1f5f9;
-  padding: 0.25rem;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  /* Subtle glass pill */
+  padding: 0.5rem;
   border-radius: 99px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .nav-btn {
   border: none;
-  padding: 0.6rem 1.25rem;
+  padding: 0.6rem 1.5rem;
   border-radius: 99px;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   background: transparent;
-  color: var(--text-light);
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .nav-btn:hover {
-  color: var(--primary);
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .nav-btn.active {
-  background: white;
-  color: var(--primary);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  background: var(--gold);
+  color: var(--primary-dark);
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(198, 168, 124, 0.3);
 }
 
 .nav-btn.bg-admin {
-  margin-left: 0.5rem;
-}
-
-.nav-btn.bg-admin:hover,
-.nav-btn.bg-admin.active {
-  background: #fffbeb;
-  /* Light gold bg */
-  color: var(--accent);
-  border: 1px solid var(--accent);
+  /* Special style for admin if needed, or keep consistent */
 }
 
 .app-main {
   flex: 1;
   width: 100%;
-  max-width: 1000px;
+  /* Max width is handled by specific pages or kept full for landing */
   margin: 0 auto;
-  padding: 3rem 2rem;
 }
 
 .page {
-  animation: fadeIn 0.4s ease-out;
+  animation: fadeIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  padding: 3rem 2rem;
+  max-width: 1000px;
+  /* Default for text pages */
+  margin: 0 auto;
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(20px);
   }
 
   to {
@@ -108,21 +113,25 @@
 }
 
 .page h1 {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+  color: var(--primary);
 }
 
 .page p {
-  color: var(--text-light);
-  font-size: 1.1rem;
-  max-width: 600px;
+  color: var(--text-muted);
+  font-size: 1.15rem;
+  font-weight: 300;
+  max-width: 700px;
+  line-height: 1.8;
 }
 
 .app-footer {
-  padding: 1.5rem;
+  padding: 2rem;
   text-align: center;
-  background: white;
-  border-top: 1px solid #eee;
-  color: var(--text-light);
+  background: var(--primary-dark);
+  color: rgba(255, 255, 255, 0.4);
   font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }

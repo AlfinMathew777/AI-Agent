@@ -27,7 +27,7 @@ try:
     os.makedirs("logs", exist_ok=True)
     
     # Initialize settings and validate
-    print("\n🔧 Initializing application...")
+    print("\nInitializing application...")
     settings = validate_settings()
     
     # Set up logging
@@ -42,7 +42,7 @@ try:
     
 except ImportError as e:
     # Fallback to old behavior if new modules don't exist yet
-    print(f"⚠️  New core modules not loaded ({e}), using defaults")
+    print(f"WARNING: New core modules not loaded ({e}), using defaults")
     logger = None
     settings = None
 
@@ -99,7 +99,7 @@ async def startup_event():
         logger.info(f"Environment: {os.getenv('ENVIRONMENT', 'development')}")
         logger.info(f"Backend Port: {os.getenv('BACKEND_PORT', '8010')}")
     
-    print("✅ Application started successfully!\n")
+    print("Application started successfully!\n")
 
 
 @app.on_event("shutdown")
@@ -108,7 +108,7 @@ async def shutdown_event():
     if logger:
         logger.info("Application shutdown initiated")
     
-    print("\n🛑 Shutting down gracefully...")
+    print("\nShutting down gracefully...")
     
     # Close any open database connections
     try:
@@ -133,7 +133,7 @@ async def shutdown_event():
     if logger:
         logger.info("Application shutdown complete")
     
-    print("✅ Shutdown complete\n")
+    print("Shutdown complete\n")
 
 
 # Signal handlers for graceful shutdown
@@ -144,7 +144,7 @@ def signal_handler(sig, frame):
     """Handle interrupt signals gracefully"""
     if logger:
         logger.warning(f"Received signal {sig}, initiating graceful shutdown")
-    print(f"\n⚠️  Received signal {sig}, shutting down gracefully...")
+    print(f"\nWARNING: Received signal {sig}, shutting down gracefully...")
     sys.exit(0)
 
 # Register signal handlers

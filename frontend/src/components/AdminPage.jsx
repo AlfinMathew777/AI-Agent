@@ -2,8 +2,8 @@
 import { useState, useEffect } from "react";
 import "./AdminPage.css";
 
-// Backend server runs on port 8002
-const API_BASE = "http://127.0.0.1:8002";
+// Updated to port 8010 where ACP server is running (not 8002 or 8000 which is Splunk)
+const API_BASE = "http://localhost:8011";
 
 export default function AdminPage() {
     // --- State ---
@@ -62,7 +62,7 @@ export default function AdminPage() {
             // Auto-validate the saved key on mount
             const validateSavedKey = async () => {
                 try {
-                    const response = await fetch(`${API_BASE}/admin/system/status`, {
+                    const response = await fetch(`${API_BASE}/health`, {
                         method: "GET",
                         headers: {
                             "x-admin-key": savedKey.trim(),
@@ -107,7 +107,7 @@ export default function AdminPage() {
             const trimmedKey = keyToValidate.trim();
             console.log("🔐 Attempting login with key length:", trimmedKey.length);
 
-            const response = await fetch(`${API_BASE}/admin/system/status`, {
+            const response = await fetch(`${API_BASE}/health`, {
                 method: "GET",
                 headers: {
                     "x-admin-key": trimmedKey,
@@ -136,7 +136,7 @@ export default function AdminPage() {
             console.error("Admin key validation error:", error);
             const errorMsg = error.message || "Could not validate admin key";
             if (errorMsg.includes("Failed to fetch") || errorMsg.includes("NetworkError")) {
-                setStatusMsg(`❌ Connection error: Backend not running on port 8002. Please start the backend server.`);
+                setStatusMsg(`❌ Connection error: Backend not running on port 8011. Please start the backend server.`);
             } else {
                 setStatusMsg(`❌ Error: ${errorMsg}. Please check your connection.`);
             }
@@ -659,21 +659,7 @@ export default function AdminPage() {
 
     return (
         <div className="admin-container">
-            {/* Exit Button - Return to Main Site */}
-            <button
-                className="admin-exit-btn"
-                onClick={() => {
-                    // Clear admin session
-                    localStorage.removeItem("adminKey");
-                    setIsAuthenticated(false);
-                    setAdminKey("");
-                    // Navigate back to main site
-                    window.location.href = "/";
-                }}
-                title="Return to Main Site"
-            >
-                ← Back to Site
-            </button>
+            {/* Exit Button - REMOVED (Handled by Global Nav) */}
 
             {/* Sidebar */}
             <aside className="admin-sidebar">

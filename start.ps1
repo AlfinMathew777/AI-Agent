@@ -19,8 +19,8 @@ if (-not (Test-Path "frontend\node_modules")) {
 }
 
 # Start Backend
-Write-Host "🔧 Starting Backend Server (Port 8002)..." -ForegroundColor Green
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PWD\backend'; .\venv\Scripts\python -m uvicorn app.main:app --host 127.0.0.1 --port 8002 --reload"
+Write-Host "🔧 Starting Backend Server (Port 8011)..." -ForegroundColor Green
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PWD\backend'; .\venv\Scripts\python -m uvicorn app.main:app --host 127.0.0.1 --port 8011 --reload"
 
 # Wait for backend to start
 Write-Host "⏳ Waiting for backend to initialize..." -ForegroundColor Yellow
@@ -28,7 +28,7 @@ Start-Sleep -Seconds 5
 
 # Test backend health
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:8002/health" -UseBasicParsing -TimeoutSec 5
+    $response = Invoke-WebRequest -Uri "http://localhost:8011/health" -UseBasicParsing -TimeoutSec 5
     Write-Host "✅ Backend is running!" -ForegroundColor Green
 } catch {
     Write-Host "⚠️  Backend health check failed, but continuing..." -ForegroundColor Yellow
@@ -41,8 +41,8 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PWD\frontend
 Write-Host ""
 Write-Host "✨ Servers starting!" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "📍 Backend:  http://localhost:8002" -ForegroundColor White
+Write-Host "📍 Backend:  http://localhost:8011" -ForegroundColor White
 Write-Host "📍 Frontend: http://localhost:5173" -ForegroundColor White
-Write-Host "📍 Docs:     http://localhost:8002/docs" -ForegroundColor White
+Write-Host "📍 Docs:     http://localhost:8011/docs" -ForegroundColor White
 Write-Host ""
 Write-Host "Press Ctrl+C in each window to stop servers" -ForegroundColor Gray

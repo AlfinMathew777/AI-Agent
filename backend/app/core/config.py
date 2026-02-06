@@ -8,7 +8,11 @@ This module provides:
 - Secret management
 """
 
-from pydantic import BaseSettings, validator, Field
+try:
+    from pydantic_settings import BaseSettings
+except ImportError:
+    from pydantic import BaseSettings
+from pydantic import validator, Field
 from typing import Optional, List
 from functools import lru_cache
 import os
@@ -43,7 +47,7 @@ class Settings(BaseSettings):
     
     # CORS settings
     cors_origins: List[str] = Field(
-        default=["http://localhost:5174", "http://localhost:3000"],
+        default=["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
         env="CORS_ORIGINS"
     )
     
@@ -61,7 +65,7 @@ class Settings(BaseSettings):
     
     # Admin authentication
     admin_api_key: str = Field(..., env="ADMIN_API_KEY")  # Required!
-    allow_dev_admin_key: bool = Field(default=False, env="ALLOW_DEV_ADMIN_KEY")
+    allow_dev_admin_key: bool = Field(default=True, env="ALLOW_DEV_ADMIN_KEY")
     
     # Session management
     secret_key: str = Field(
@@ -215,6 +219,21 @@ def get_settings() -> Settings:
     return Settings()
 
 
+# Database path (for backward compatibility)
+# config.py is at: backend/app/core/config.py
+# hotel.db should be at: backend/hotel.db
+# So: parent (core) -> parent (app) -> parent (backend) -> hotel.db
+from pathlib import Path
+DB_PATH = Path(__file__).parent.parent.parent / "hotel.db"
+
+# ChromaDB path (at project root)
+# ChromaDB path (at project root)
+CHROMA_PATH = Path(__file__).parent.parent.parent.parent / "chroma_db"
+
+# Data directory (app/data)
+DATA_DIR = Path(__file__).parent.parent / "data"
+
+
 def validate_settings():
     """
     Validate all settings on application startup.
@@ -234,7 +253,7 @@ def validate_settings():
         
         # Print configuration summary
         print("=" * 60)
-        print(f"🏨 {settings.app_name} - Configuration Loaded")
+        print(f"[HOTEL] {settings.app_name} - Configuration Loaded")
         print("=" * 60)
         print(f"Environment:     {settings.environment}")
         print(f"Debug Mode:      {settings.debug}")
@@ -242,14 +261,22 @@ def validate_settings():
         print(f"Database:        {settings.database_url}")
         print(f"Log Level:       {settings.log_level}")
         print(f"AI Service:      {'Enabled' if settings.enable_ai_service else 'Disabled'}")
-        print(f"Google AI:       {'✓' if settings.has_google_ai else '✗'}")
-        print(f"OpenAI:          {'✓' if settings.has_openai else '✗'}")
+        print(f"Google AI:       {'YES' if settings.has_google_ai else 'NO'}")
+        print(f"OpenAI:          {'YES' if settings.has_openai else 'NO'}")
         print("=" * 60)
         
         return settings
         
     except Exception as e:
-        print("❌ Configuration Error!")
+        print("[ERROR] Configuration Error!")
         print(f"Error: {str(e)}")
         print("\nPlease check your .env file and environment variables.")
         raise
+
+# Backward compatibility for Stripe
+_settings = get_settings()
+STRIPE_SECRET_KEY = _settings.stripe_api_key
+STRIPE_PUBLIC_KEY = "pk_test_placeholder" 
+INTEGRATION_MODE = "test"
+BACKEND_BASE_URL = f"http://{_settings.backend_host}:{_settings.backend_port}"
+STRIPE_WEBHOOK_SECRET = "whsec_test_dummy"

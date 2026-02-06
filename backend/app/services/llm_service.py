@@ -371,9 +371,25 @@ class HotelAI:
         
         for attempt in range(max_retries + 1):
             try:
-                # Use simple generate_content - no tools for now to avoid errors
+                # Run synchronous Gemini call in a thread to avoid blocking the event loop
                 print(f"[LLM] Attempting API call (attempt {attempt + 1})...")
-                response = self._gemini_model.generate_content(prompt)
+                
+                import functools
+                loop = asyncio.get_running_loop()
+                # Create a partial function to pass the prompt argument
+                func = functools.partial(self._gemini_model.generate_content, prompt)
+                
+                try:
+                    # Add 20-second timeout
+                    response = await asyncio.wait_for(
+                        loop.run_in_executor(None, func),
+                        timeout=20.0
+                    )
+                except asyncio.TimeoutError:
+                    print(f"[LLM] API call timed out (20s)")
+                    if context_chunks:
+                         return self._generate_offline(audience, question, context_chunks)
+                    return "I'm experiencing delays connecting to my brain. Please try again."
 
                 # Extract Final Text
                 try:

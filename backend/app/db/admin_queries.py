@@ -27,7 +27,7 @@ def get_chat_history(tenant_id: str, audience: str = None, limit: int = 50, offs
         
         # Get paginated results
         query = f'''
-            SELECT id, timestamp, session_id, audience, question, answer, latency_ms, created_at
+            SELECT id, timestamp, session_id, audience, question, answer, model_used, latency_ms
             FROM chat_logs
             {where_clause}
             ORDER BY timestamp DESC
