@@ -1,68 +1,93 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Loader2, FileText, BookOpen, HelpCircle, Headphones } from "lucide-react";
+import { Send, Bot, User, Loader2, FileText, BookOpen, HelpCircle, Headphones, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 
-const ROLE_CONTEXT = {
-  front_desk: {
-    title: "Front Desk Assistant",
-    description: "Ask about check-in/out procedures, reservation policies, guest services, and front desk operations.",
-    examples: [
-      "What is the late check-out policy?",
-      "How do I handle a guest complaint?",
-      "What amenities come with the deluxe rooms?",
-      "What's the procedure for lost and found items?"
-    ]
-  },
-  housekeeping: {
-    title: "Housekeeping Assistant",
-    description: "Ask about cleaning procedures, room standards, supplies, and housekeeping protocols.",
-    examples: [
-      "What is the standard room cleaning checklist?",
-      "How do I handle a biohazard situation?",
-      "What's the procedure for deep cleaning?",
-      "How often should linens be changed?"
-    ]
-  },
-  restaurant: {
-    title: "Restaurant Assistant",
-    description: "Ask about menu items, dietary restrictions, food safety, and restaurant operations.",
-    examples: [
-      "What are the allergen-free options on the menu?",
-      "How do I handle a food allergy emergency?",
-      "What's the wine pairing for the steak?",
-      "What are the restaurant opening hours?"
-    ]
-  },
-  manager: {
-    title: "Management Assistant",
-    description: "Ask about hotel policies, staff procedures, operational guidelines, and management protocols.",
-    examples: [
-      "What is the escalation procedure for guest complaints?",
-      "How do I approve overtime for staff?",
-      "What are the fire safety procedures?",
-      "How do I handle a staffing shortage?"
-    ]
-  },
-  admin: {
-    title: "Admin Assistant",
-    description: "Full access to all hotel policies, procedures, and operational knowledge base.",
-    examples: [
-      "What are the emergency evacuation procedures?",
-      "How do I update the pricing structure?",
-      "What's the vendor management process?",
-      "How do I onboard a new employee?"
-    ]
-  }
+const API_URL = process.env.REACT_APP_BACKEND_URL || "";
+
+// Helper to get auth headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("token");
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {})
+  };
+};
+
+// Fallback example questions if API fails
+const FALLBACK_EXAMPLES = {
+  front_desk: [
+    "What is the late check-out policy?",
+    "How do I handle a guest complaint?",
+    "What amenities come with the deluxe rooms?",
+    "What's the procedure for lost and found items?"
+  ],
+  housekeeping: [
+    "What is the standard room cleaning checklist?",
+    "How do I handle a biohazard situation?",
+    "What's the procedure for deep cleaning?",
+    "How often should linens be changed?"
+  ],
+  restaurant: [
+    "What are the allergen-free options on the menu?",
+    "How do I handle a food allergy emergency?",
+    "What's the wine pairing for the steak?",
+    "What are the restaurant opening hours?"
+  ],
+  manager: [
+    "What is the escalation procedure for guest complaints?",
+    "How do I approve overtime for staff?",
+    "What are the fire safety procedures?",
+    "How do I handle a staffing shortage?"
+  ],
+  admin: [
+    "What are the emergency evacuation procedures?",
+    "How do I update the pricing structure?",
+    "What's the vendor management process?",
+    "How do I onboard a new employee?"
+  ]
+};
+
+const ROLE_TITLES = {
+  front_desk: "Front Desk Assistant",
+  housekeeping: "Housekeeping Assistant",
+  restaurant: "Restaurant Assistant",
+  manager: "Management Assistant",
+  admin: "Admin Assistant"
 };
 
 export default function StaffChat({ user }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sessionId, setSessionId] = useState(null);
+  const [roleContext, setRoleContext] = useState(null);
+  const [exampleQuestions, setExampleQuestions] = useState([]);
   const messagesEndRef = useRef(null);
-  const API_URL = process.env.REACT_APP_BACKEND_URL;
   
   const userRole = user?.role || "front_desk";
-  const roleConfig = ROLE_CONTEXT[userRole] || ROLE_CONTEXT.front_desk;
+
+  // Fetch role context on mount
+  useEffect(() => {
+    fetchRoleContext();
+  }, [userRole]);
+
+  const fetchRoleContext = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/staff/context`, {
+        headers: getAuthHeaders()
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRoleContext(data);
+        setExampleQuestions(data.example_questions || FALLBACK_EXAMPLES[userRole] || []);
+      } else {
+        // Fallback
+        setExampleQuestions(FALLBACK_EXAMPLES[userRole] || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch role context:", err);
+      setExampleQuestions(FALLBACK_EXAMPLES[userRole] || []);
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -81,13 +106,31 @@ export default function StaffChat({ user }) {
     setLoading(true);
 
     try {
-      // For now, use a mock response - this will be connected to the PolicyAgent later
-      // In Phase 2 (Staff AI), this will be: POST /api/staff/chat with RAG integration
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const res = await fetch(`${API_URL}/api/staff/chat`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          message: input,
+          session_id: sessionId
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
       
+      // Update session ID if new
+      if (data.session_id && !sessionId) {
+        setSessionId(data.session_id);
+      }
+
       const assistantMessage = {
         role: "assistant",
-        content: `**Staff AI Response** (Demo Mode)\n\nThis is a placeholder response for your question about: "${input}"\n\n*Note: The full Staff AI with RAG knowledge base integration will be implemented in the next phase. This assistant will answer questions based on hotel policies and procedures stored in the knowledge base.*`
+        content: data.answer,
+        sources: data.sources || [],
+        chunks_used: data.chunks_used || 0
       };
       
       setMessages(prev => [...prev, assistantMessage]);
@@ -95,7 +138,8 @@ export default function StaffChat({ user }) {
       console.error("Staff chat error:", error);
       setMessages(prev => [...prev, {
         role: "assistant",
-        content: "I apologize, but I encountered an error. Please try again."
+        content: "I apologize, but I encountered an error connecting to the assistant. Please try again or contact support if the issue persists.",
+        isError: true
       }]);
     } finally {
       setLoading(false);
@@ -105,6 +149,9 @@ export default function StaffChat({ user }) {
   const handleExampleClick = (example) => {
     setInput(example);
   };
+
+  const roleTitle = roleContext?.title || ROLE_TITLES[userRole] || "Staff Assistant";
+  const focusAreas = roleContext?.focus_areas || [];
 
   return (
     <div data-testid="staff-chat-page" style={{ 
@@ -136,17 +183,39 @@ export default function StaffChat({ user }) {
               color: "#F1F5F9",
               margin: 0
             }}>
-              {roleConfig.title}
+              {roleTitle}
             </h1>
             <p style={{ 
               color: "#94A3B8", 
               fontSize: "0.875rem",
               margin: 0
             }}>
-              {roleConfig.description}
+              Ask about hotel policies, procedures, and operational guidance
             </p>
           </div>
         </div>
+        
+        {/* Focus Areas Tags */}
+        {focusAreas.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+            {focusAreas.slice(0, 5).map((area, idx) => (
+              <span
+                key={idx}
+                style={{
+                  padding: "4px 10px",
+                  background: "rgba(56,189,248,0.1)",
+                  border: "1px solid rgba(56,189,248,0.2)",
+                  borderRadius: 16,
+                  color: "#38BDF8",
+                  fontSize: "0.7rem",
+                  textTransform: "capitalize"
+                }}
+              >
+                {area}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Chat Area */}
@@ -184,6 +253,7 @@ export default function StaffChat({ user }) {
                 </h3>
                 <p style={{ color: "#64748B", fontSize: "0.875rem", maxWidth: 400 }}>
                   Ask me anything about hotel policies, procedures, or operational guidelines.
+                  I'll provide role-specific guidance based on your position.
                 </p>
               </div>
               
@@ -194,7 +264,7 @@ export default function StaffChat({ user }) {
                 maxWidth: 600,
                 width: "100%"
               }}>
-                {roleConfig.examples.map((example, idx) => (
+                {exampleQuestions.map((example, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleExampleClick(example)}
@@ -230,49 +300,7 @@ export default function StaffChat({ user }) {
             </div>
           ) : (
             messages.map((msg, idx) => (
-              <div
-                key={idx}
-                style={{
-                  display: "flex",
-                  gap: 12,
-                  flexDirection: msg.role === "user" ? "row-reverse" : "row"
-                }}
-              >
-                <div style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: "50%",
-                  background: msg.role === "user" 
-                    ? "linear-gradient(135deg, #38BDF8, #0EA5E9)" 
-                    : "linear-gradient(135deg, #A78BFA, #8B5CF6)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0
-                }}>
-                  {msg.role === "user" 
-                    ? <User size={16} color="#0F172A" />
-                    : <Bot size={16} color="#0F172A" />
-                  }
-                </div>
-                <div style={{
-                  maxWidth: "70%",
-                  padding: "0.75rem 1rem",
-                  borderRadius: 12,
-                  background: msg.role === "user" 
-                    ? "rgba(56,189,248,0.15)" 
-                    : "rgba(167,139,250,0.1)",
-                  border: msg.role === "user"
-                    ? "1px solid rgba(56,189,248,0.3)"
-                    : "1px solid rgba(167,139,250,0.2)",
-                  color: "#F1F5F9",
-                  fontSize: "0.875rem",
-                  lineHeight: 1.6,
-                  whiteSpace: "pre-wrap"
-                }}>
-                  {msg.content}
-                </div>
-              </div>
+              <MessageBubble key={idx} message={msg} />
             ))
           )}
           {loading && (
@@ -298,7 +326,7 @@ export default function StaffChat({ user }) {
                 gap: 8
               }}>
                 <Loader2 size={16} className="spin" color="#A78BFA" />
-                <span style={{ color: "#94A3B8", fontSize: "0.875rem" }}>Thinking...</span>
+                <span style={{ color: "#94A3B8", fontSize: "0.875rem" }}>Searching knowledge base...</span>
               </div>
             </div>
           )}
@@ -367,6 +395,115 @@ export default function StaffChat({ user }) {
           animation: spin 1s linear infinite;
         }
       `}</style>
+    </div>
+  );
+}
+
+
+// Message Bubble Component
+function MessageBubble({ message }) {
+  const [showSources, setShowSources] = useState(false);
+  const isUser = message.role === "user";
+  const hasSources = message.sources && message.sources.length > 0;
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: 12,
+        flexDirection: isUser ? "row-reverse" : "row"
+      }}
+    >
+      <div style={{
+        width: 32,
+        height: 32,
+        borderRadius: "50%",
+        background: isUser 
+          ? "linear-gradient(135deg, #38BDF8, #0EA5E9)" 
+          : "linear-gradient(135deg, #A78BFA, #8B5CF6)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0
+      }}>
+        {isUser 
+          ? <User size={16} color="#0F172A" />
+          : <Bot size={16} color="#0F172A" />
+        }
+      </div>
+      <div style={{ maxWidth: "75%" }}>
+        <div style={{
+          padding: "0.75rem 1rem",
+          borderRadius: 12,
+          background: isUser 
+            ? "rgba(56,189,248,0.15)" 
+            : message.isError 
+              ? "rgba(239,68,68,0.1)"
+              : "rgba(167,139,250,0.1)",
+          border: isUser
+            ? "1px solid rgba(56,189,248,0.3)"
+            : message.isError
+              ? "1px solid rgba(239,68,68,0.2)"
+              : "1px solid rgba(167,139,250,0.2)",
+          color: "#F1F5F9",
+          fontSize: "0.875rem",
+          lineHeight: 1.7,
+          whiteSpace: "pre-wrap"
+        }}>
+          {message.content}
+        </div>
+        
+        {/* Sources Section */}
+        {hasSources && (
+          <div style={{ marginTop: 8 }}>
+            <button
+              onClick={() => setShowSources(!showSources)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "4px 8px",
+                background: "rgba(167,139,250,0.08)",
+                border: "1px solid rgba(167,139,250,0.15)",
+                borderRadius: 6,
+                color: "#A78BFA",
+                fontSize: "0.7rem",
+                cursor: "pointer"
+              }}
+            >
+              <FileText size={12} />
+              {message.sources.length} source{message.sources.length > 1 ? "s" : ""} referenced
+              {showSources ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </button>
+            
+            {showSources && (
+              <div style={{ 
+                marginTop: 8, 
+                padding: 12, 
+                background: "rgba(0,0,0,0.2)", 
+                borderRadius: 8,
+                fontSize: "0.75rem",
+                color: "#94A3B8"
+              }}>
+                {message.sources.map((source, idx) => (
+                  <div key={idx} style={{ 
+                    marginBottom: idx < message.sources.length - 1 ? 8 : 0,
+                    paddingBottom: idx < message.sources.length - 1 ? 8 : 0,
+                    borderBottom: idx < message.sources.length - 1 ? "1px solid #334155" : "none"
+                  }}>
+                    <div style={{ color: "#A78BFA", marginBottom: 4 }}>
+                      Source {source.index}
+                    </div>
+                    <div style={{ fontStyle: "italic" }}>
+                      "{source.preview}"
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

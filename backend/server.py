@@ -162,6 +162,14 @@ def _include_routers():
     except Exception as e:
         print(f"[Server] marketplace router: {e}")
 
+    try:
+        from app.api.routes.staff_chat import router as staff_chat_router
+        app.include_router(staff_chat_router, prefix="/api")
+    except Exception as e:
+        import traceback
+        print(f"[Server] staff_chat router: {e}")
+        traceback.print_exc()
+
 
 _include_routers()
 
