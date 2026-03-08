@@ -186,8 +186,32 @@ def parse_amenities(amenities_str: str) -> List[str]:
     return [a.strip() for a in amenities_str.split(",")]
 
 
+def normalize_date_string(date_str: str) -> str:
+    """Normalize malformed date strings (e.g., '0026-03-15' -> '2026-03-15')."""
+    if not date_str:
+        return date_str
+    parts = date_str.split("-")
+    if len(parts) != 3:
+        return date_str
+    year, month, day = parts
+    try:
+        year_num = int(year)
+        if year_num < 100:
+            # Assume 20XX for years under 100
+            year = f"20{year[-2:].zfill(2)}"
+        elif year_num < 1000:
+            # Year like 026 should become 2026
+            year = f"2{year.zfill(3)}"
+    except ValueError:
+        pass
+    return f"{year}-{month}-{day}"
+
+
 def calculate_nights(check_in: str, check_out: str) -> int:
     """Calculate number of nights between dates."""
+    # Normalize dates first
+    check_in = normalize_date_string(check_in)
+    check_out = normalize_date_string(check_out)
     d1 = datetime.strptime(check_in, "%Y-%m-%d").date()
     d2 = datetime.strptime(check_out, "%Y-%m-%d").date()
     return (d2 - d1).days
@@ -212,10 +236,27 @@ async def get_available_rooms(
     Get available rooms for the given date range.
     Returns rooms with pricing and descriptions.
     """
+    # Normalize dates before validation
+    check_in_str = normalize_date_string(request.check_in)
+    check_out_str = normalize_date_string(request.check_out)
+    
     # Validate dates
     try:
-        check_in = datetime.strptime(request.check_in, "%Y-%m-%d").date()
-        check_out = datetime.strptime(request.check_out, "%Y-%m-%d").date()
+        check_in = datetime.strptime(check_in_str, "%Y-%m-%d").date()
+        check_out = datetime.strptime(check_out_str, "%Y-%m-%d").date()
+        
+        # Additional validation: year must be reasonable (current year to +5 years)
+        current_year = date.today().year
+        if check_in.year < current_year or check_in.year > current_year + 5:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Invalid check-in year. Please select a date between {current_year} and {current_year + 5}"
+            )
+        if check_out.year < current_year or check_out.year > current_year + 5:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Invalid check-out year. Please select a date between {current_year} and {current_year + 5}"
+            )
         
         if check_in >= check_out:
             raise HTTPException(status_code=400, detail="Check-out must be after check-in")
@@ -224,8 +265,8 @@ async def get_available_rooms(
         if (check_out - check_in).days > 30:
             raise HTTPException(status_code=400, detail="Maximum stay is 30 nights")
             
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid date format. Use YYYY-MM-DD. Error: {str(e)}")
     
     nights = (check_out - check_in).days
     

@@ -552,15 +552,88 @@ function MessageBubble({
 function DatePicker({ onSelect }) {
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
+  const [error, setError] = useState("");
   
   const today = new Date().toISOString().split("T")[0];
   const maxDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  const currentYear = new Date().getFullYear();
 
-  const handleSubmit = () => {
-    if (checkIn && checkOut && checkIn < checkOut) {
-      onSelect(checkIn, checkOut);
+  // Validate and normalize a date string (fixes malformed years like 0026 -> 2026)
+  const normalizeDate = (dateStr) => {
+    if (!dateStr) return "";
+    
+    // Parse the date parts
+    const parts = dateStr.split("-");
+    if (parts.length !== 3) return dateStr;
+    
+    let [year, month, day] = parts;
+    
+    // Fix malformed years (e.g., "0026" should become "2026")
+    const yearNum = parseInt(year, 10);
+    if (yearNum < 100) {
+      // Assume 20XX for years under 100
+      year = `20${year.slice(-2).padStart(2, "0")}`;
+    } else if (yearNum < 1000) {
+      // Year like 026 should become 2026
+      year = `2${year.padStart(3, "0")}`;
+    }
+    
+    return `${year}-${month}-${day}`;
+  };
+
+  // Validate date is within acceptable range
+  const isValidDate = (dateStr) => {
+    if (!dateStr) return false;
+    const normalized = normalizeDate(dateStr);
+    const parts = normalized.split("-");
+    if (parts.length !== 3) return false;
+    
+    const year = parseInt(parts[0], 10);
+    // Valid year range: current year to current year + 2
+    return year >= currentYear && year <= currentYear + 2;
+  };
+
+  const handleCheckInChange = (e) => {
+    const value = e.target.value;
+    const normalized = normalizeDate(value);
+    setCheckIn(normalized);
+    setError("");
+    
+    if (value && !isValidDate(normalized)) {
+      setError("Please select a valid date");
     }
   };
+
+  const handleCheckOutChange = (e) => {
+    const value = e.target.value;
+    const normalized = normalizeDate(value);
+    setCheckOut(normalized);
+    setError("");
+    
+    if (value && !isValidDate(normalized)) {
+      setError("Please select a valid date");
+    }
+  };
+
+  const handleSubmit = () => {
+    const normalizedIn = normalizeDate(checkIn);
+    const normalizedOut = normalizeDate(checkOut);
+    
+    // Final validation
+    if (!isValidDate(normalizedIn) || !isValidDate(normalizedOut)) {
+      setError("Please select valid dates");
+      return;
+    }
+    
+    if (normalizedIn >= normalizedOut) {
+      setError("Check-out must be after check-in");
+      return;
+    }
+    
+    onSelect(normalizedIn, normalizedOut);
+  };
+
+  const isValid = checkIn && checkOut && isValidDate(checkIn) && isValidDate(checkOut) && checkIn < checkOut;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "1rem", background: "rgba(56,189,248,0.08)", borderRadius: 12, border: "1px solid rgba(56,189,248,0.2)" }}>
@@ -572,7 +645,7 @@ function DatePicker({ onSelect }) {
             value={checkIn}
             min={today}
             max={maxDate}
-            onChange={e => setCheckIn(e.target.value)}
+            onChange={handleCheckInChange}
             data-testid="checkin-date"
             style={{ width: "100%", padding: "0.6rem", borderRadius: 8, border: "1px solid #334155", background: "#0F172A", color: "#F1F5F9", fontSize: "0.85rem" }}
           />
@@ -584,23 +657,28 @@ function DatePicker({ onSelect }) {
             value={checkOut}
             min={checkIn || today}
             max={maxDate}
-            onChange={e => setCheckOut(e.target.value)}
+            onChange={handleCheckOutChange}
             data-testid="checkout-date"
             style={{ width: "100%", padding: "0.6rem", borderRadius: 8, border: "1px solid #334155", background: "#0F172A", color: "#F1F5F9", fontSize: "0.85rem" }}
           />
         </div>
       </div>
+      {error && (
+        <div style={{ color: "#EF4444", fontSize: "0.75rem", textAlign: "center" }}>
+          {error}
+        </div>
+      )}
       <button
         onClick={handleSubmit}
-        disabled={!checkIn || !checkOut || checkIn >= checkOut}
+        disabled={!isValid}
         data-testid="confirm-dates-btn"
         style={{
           padding: "0.7rem",
-          background: (checkIn && checkOut && checkIn < checkOut) ? "linear-gradient(135deg,#38BDF8,#0EA5E9)" : "#334155",
+          background: isValid ? "linear-gradient(135deg,#38BDF8,#0EA5E9)" : "#334155",
           border: "none", borderRadius: 8,
-          color: (checkIn && checkOut && checkIn < checkOut) ? "#0F172A" : "#64748B",
+          color: isValid ? "#0F172A" : "#64748B",
           fontWeight: 600, fontSize: "0.85rem",
-          cursor: (checkIn && checkOut && checkIn < checkOut) ? "pointer" : "not-allowed"
+          cursor: isValid ? "pointer" : "not-allowed"
         }}
       >
         Confirm Dates
