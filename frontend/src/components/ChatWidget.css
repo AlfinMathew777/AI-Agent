@@ -1,0 +1,230 @@
+/* ChatWidget.css - Premium Edition */
+
+:root {
+    /* Map to Premium System */
+    --monica-bg: var(--bg-card, #ffffff);
+    --monica-surface: var(--bg-page, #f9fafb);
+    --monica-text: var(--text-main, #1f2937);
+    --monica-subtext: var(--text-muted, #6b7280);
+    --monica-accent: var(--gold, #c6a87c);
+    /* GOLD ACCENT */
+    --monica-border: rgba(0, 0, 0, 0.1);
+    --monica-hover: rgba(198, 168, 124, 0.1);
+}
+
+/* Floating Action Button */
+.chat-fab {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    /* Luxury Gradient */
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    box-shadow: 0 4px 20px rgba(198, 168, 124, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, opacity 0.2s, box-shadow 0.2s;
+    animation: float 3s ease-in-out infinite;
+}
+
+.chat-fab:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 25px rgba(198, 168, 124, 0.6);
+}
+
+.fab-icon {
+    font-size: 1.8rem;
+    color: white;
+    /* Icon is white */
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+/* Sidebar Container */
+.chat-sidebar {
+    position: fixed;
+    top: 0;
+    right: -450px;
+    width: 400px;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    color: var(--monica-text);
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.1);
+    z-index: 1001;
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    font-family: var(--font-body);
+}
+
+.chat-sidebar.open {
+    right: 0;
+}
+
+/* Full Page Mode */
+.chat-sidebar.full-page {
+    width: 90vw;
+    height: 90vh;
+    top: 5vh;
+    right: 5vw;
+    border-radius: 12px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Header */
+.sidebar-header {
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--monica-border);
+    background: transparent;
+}
+
+.header-title h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--primary);
+    background: none;
+    -webkit-text-fill-color: initial;
+}
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--monica-subtext);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.icon-btn:hover {
+    background: var(--monica-hover);
+    color: var(--gold);
+}
+
+/* Tools Grid */
+.monica-tools {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--monica-border);
+    background: rgba(249, 250, 251, 0.5);
+}
+
+.tools-label {
+    font-size: 0.75rem;
+    color: var(--gold-dark);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.more-link {
+    color: var(--monica-accent);
+    cursor: pointer;
+    text-transform: none;
+    letter-spacing: normal;
+    font-size: 0.8rem;
+}
+
+.tools-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
+
+.tool-item {
+    background: white;
+    border: 1px solid var(--monica-border);
+    border-radius: 8px;
+    /* Sharper */
+    padding: 12px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+}
+
+.tool-item:hover {
+    background: white;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+    border-color: var(--gold);
+}
+
+.tool-icon {
+    font-size: 1.4rem;
+}
+
+.tool-name {
+    font-size: 0.7rem;
+    color: var(--monica-text);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Chat Content Area */
+.sidebar-content {
+    flex: 1;
+    overflow: hidden;
+    background: white;
+    position: relative;
+    border-radius: 0 0 12px 12px;
+}
+
+/* Backdrop */
+.backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.6);
+    /* Navy Dim */
+    backdrop-filter: blur(4px);
+    z-index: 999;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .chat-sidebar {
+        width: 100%;
+    }
+
+    .chat-sidebar.full-page {
+        width: 100vw;
+        height: 100vh;
+        top: 0;
+        right: 0;
+        border-radius: 0;
+    }
+}

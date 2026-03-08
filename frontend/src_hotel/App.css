@@ -1,0 +1,137 @@
+/* src/App.css - Premium Header & Layout */
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 3rem;
+  background: var(--primary-dark);
+  /* Dark Luxury Header */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: white;
+  /* White on Dark */
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.brand-subtitle {
+  font-size: 0.7rem;
+  color: var(--gold);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  margin-top: 4px;
+}
+
+.nav {
+  display: flex;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  /* Subtle glass pill */
+  padding: 0.5rem;
+  border-radius: 99px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav-btn {
+  border: none;
+  padding: 0.6rem 1.5rem;
+  border-radius: 99px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.nav-btn:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-btn.active {
+  background: var(--gold);
+  color: var(--primary-dark);
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(198, 168, 124, 0.3);
+}
+
+.nav-btn.bg-admin {
+  /* Special style for admin if needed, or keep consistent */
+}
+
+.app-main {
+  flex: 1;
+  width: 100%;
+  /* Max width is handled by specific pages or kept full for landing */
+  margin: 0 auto;
+}
+
+.page {
+  animation: fadeIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  padding: 3rem 2rem;
+  max-width: 1000px;
+  /* Default for text pages */
+  margin: 0 auto;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page h1 {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+  color: var(--primary);
+}
+
+.page p {
+  color: var(--text-muted);
+  font-size: 1.15rem;
+  font-weight: 300;
+  max-width: 700px;
+  line-height: 1.8;
+}
+
+.app-footer {
+  padding: 2rem;
+  text-align: center;
+  background: var(--primary-dark);
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
