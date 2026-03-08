@@ -120,6 +120,19 @@ def _include_routers():
         print(f"[Server] admin_jobs router: {e}")
 
     try:
+        from app.api.routes import a2a as a2a_route
+        app.include_router(a2a_route.router, prefix="/api")
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        print(f"[Server] a2a router: {e}")
+
+    try:
+        from app.api.routes import analytics
+        app.include_router(analytics.router, prefix="/api")
+    except Exception as e:
+        print(f"[Server] analytics router: {e}")
+
+    try:
         from app.acp.protocol.gateway_server import router as acp_router
         app.include_router(acp_router, prefix="/api")
     except Exception as e:
