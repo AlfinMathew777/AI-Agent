@@ -396,6 +396,28 @@ def init_db():
     c.execute("CREATE INDEX IF NOT EXISTS idx_housekeeping_room ON housekeeping(room_id)")
     c.execute("CREATE INDEX IF NOT EXISTS idx_housekeeping_status ON housekeeping(status)")
 
+    # 12. Payment Transactions Table (Stripe Integration)
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS payment_transactions (
+            id TEXT PRIMARY KEY,
+            tenant_id TEXT,
+            booking_id TEXT,
+            session_id TEXT,
+            payment_intent_id TEXT,
+            amount REAL,
+            currency TEXT DEFAULT 'usd',
+            payment_status TEXT DEFAULT 'pending',
+            metadata TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(tenant_id) REFERENCES tenants(id),
+            FOREIGN KEY(booking_id) REFERENCES reservations(id)
+        )
+    ''')
+    c.execute("CREATE INDEX IF NOT EXISTS idx_payment_transactions_tenant ON payment_transactions(tenant_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_payment_transactions_booking ON payment_transactions(booking_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_payment_transactions_session ON payment_transactions(session_id)")
+
     # ---------------------------------------------------------
     # Task 13.1-A: New Commerce Inventory Schema
     # ---------------------------------------------------------

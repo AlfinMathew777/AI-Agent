@@ -178,6 +178,14 @@ def _include_routers():
         print(f"[Server] management router: {e}")
         traceback.print_exc()
 
+    try:
+        from app.api.routes.booking import router as booking_router
+        app.include_router(booking_router, prefix="/api")
+    except Exception as e:
+        import traceback
+        print(f"[Server] booking router: {e}")
+        traceback.print_exc()
+
 
 _include_routers()
 
