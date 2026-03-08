@@ -1,188 +1,139 @@
 {
-  "design_system": {
-    "identity": {
-      "name": "Hotel A2A Nexus",
-      "persona": "Dark Professional Agent-to-Agent SaaS",
-      "tone": "Futuristic, Efficient, Data-Dense, Reliable",
-      "visual_style": "Deep Slate Backgrounds, Glowing Blue Accents, Glassmorphic Panels, Terminal-inspired Feeds"
-    },
-    "typography": {
-      "font_family": {
-        "headings": "Chivo, sans-serif",
-        "body": "Inter, sans-serif",
-        "mono": "JetBrains Mono, monospace"
-      },
-      "scale": {
-        "h1": "text-4xl md:text-5xl font-bold tracking-tight",
-        "h2": "text-3xl font-semibold tracking-tight",
-        "h3": "text-2xl font-medium",
-        "h4": "text-xl font-medium",
-        "body": "text-base leading-relaxed text-slate-300",
-        "small": "text-sm text-slate-400",
-        "mono": "text-xs md:text-sm font-mono"
-      },
-      "imports": [
-        "https://fonts.googleapis.com/css2?family=Chivo:wght@300;400;700;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
-      ]
-    },
-    "colors": {
-      "palette": {
-        "background": {
-          "hex": "#0F172A",
-          "hsl": "222 47% 11%",
-          "variable": "--background",
-          "description": "Deep Slate 900 - Main app background"
-        },
-        "card": {
-          "hex": "#1E293B",
-          "hsl": "215 28% 17%",
-          "variable": "--card",
-          "description": "Slate 800 - Panels and cards"
-        },
-        "primary": {
-          "hex": "#38BDF8",
-          "hsl": "199 89% 60%",
-          "variable": "--primary",
-          "description": "Sky 400 - Main actions, active states, glowing accents"
-        },
-        "secondary": {
-          "hex": "#334155",
-          "hsl": "215 25% 27%",
-          "variable": "--secondary",
-          "description": "Slate 700 - Secondary buttons, borders"
-        },
-        "success": {
-          "hex": "#22C55E",
-          "hsl": "142 71% 45%",
-          "variable": "--success",
-          "description": "Green 500 - System operational, completed tasks"
-        },
-        "warning": {
-          "hex": "#F59E0B",
-          "hsl": "38 92% 50%",
-          "variable": "--warning",
-          "description": "Amber 500 - Alerts, negotiation in progress"
-        },
-        "destructive": {
-          "hex": "#EF4444",
-          "hsl": "0 84% 60%",
-          "variable": "--destructive",
-          "description": "Red 500 - Errors, critical failures"
-        },
-        "muted": {
-          "hex": "#94A3B8",
-          "hsl": "215 16% 47%",
-          "variable": "--muted",
-          "description": "Slate 400 - Muted text, disabled states"
-        },
-        "border": {
-          "hex": "#334155",
-          "hsl": "215 25% 27%",
-          "variable": "--border",
-          "description": "Slate 700 - Panel borders"
-        }
-      },
-      "gradients": {
-        "hero": "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
-        "glow": "radial-gradient(circle at center, rgba(56, 189, 248, 0.15) 0%, transparent 70%)"
-      }
-    },
-    "layout": {
-      "spacing_scale": {
-        "container_padding": "p-4 md:p-8 lg:p-12",
-        "section_gap": "gap-8",
-        "card_padding": "p-6"
-      },
-      "grid_systems": {
-        "dashboard_main": "grid grid-cols-1 md:grid-cols-12 gap-6",
-        "agent_grid": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4",
-        "bento_layout": "dashboard-bento"
-      },
-      "containers": {
-        "card": "bg-card border border-border/50 rounded-xl shadow-lg backdrop-blur-sm",
-        "glass_panel": "bg-card/80 backdrop-blur-md border border-white/5 shadow-xl"
-      }
-    },
-    "components": {
-      "buttons": {
-        "primary": "bg-primary text-slate-900 hover:bg-primary/90 font-medium shadow-[0_0_15px_rgba(56,189,248,0.3)] transition-all duration-200",
-        "secondary": "bg-secondary/50 text-white hover:bg-secondary/80 border border-white/10",
-        "outline": "border border-primary/50 text-primary hover:bg-primary/10",
-        "ghost": "hover:bg-white/5 text-slate-300 hover:text-white"
-      },
-      "inputs": {
-        "default": "bg-slate-950/50 border-border text-white placeholder:text-slate-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all"
-      },
-      "cards": {
-        "agent_status": "relative overflow-hidden group hover:border-primary/30 transition-colors duration-300",
-        "metric": "flex flex-col justify-between h-full"
-      },
-      "badges": {
-        "live": "animate-pulse bg-success/20 text-success border-success/20",
-        "offline": "bg-slate-700/50 text-slate-400 border-slate-600/50",
-        "busy": "bg-warning/20 text-warning border-warning/20"
-      }
-    },
-    "visual_enhancers": {
-      "shadows": {
-        "glow_sm": "0 0 10px rgba(56, 189, 248, 0.1)",
-        "glow_md": "0 0 20px rgba(56, 189, 248, 0.2)",
-        "panel": "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15)"
-      },
-      "borders": {
-        "subtle": "border border-white/5",
-        "highlight": "border border-primary/20"
-      },
-      "animations": {
-        "fade_in": "animate-in fade-in duration-500",
-        "slide_up": "animate-in slide-in-from-bottom-4 duration-500",
-        "pulse_slow": "animate-pulse duration-3000"
-      }
-    },
-    "assets": {
-      "images": {
-        "landing_hero": "https://images.unsplash.com/photo-1768543939312-7bbab10cb347?crop=entropy&cs=srgb&fm=jpg&q=85",
-        "network_bg": "https://images.unsplash.com/photo-1698669993523-bcf101a925ef?crop=entropy&cs=srgb&fm=jpg&q=85",
-        "abstract_nodes": "https://images.unsplash.com/photo-1650567397333-fa05fa466ba8?crop=entropy&cs=srgb&fm=jpg&q=85"
-      },
-      "icons": {
-        "library": "lucide-react",
-        "style": "stroke-width={1.5} className='w-5 h-5'"
-      }
-    },
-    "accessibility": {
-      "rules": [
-        "Ensure text contrast ratio of 4.5:1 against slate backgrounds",
-        "Use explicit hover/focus states for all interactive elements",
-        "Avoid relying solely on color for status (use icons + text)",
-        "All images must have alt text",
-        "Interactive elements must have data-testid attributes"
-      ]
-    },
-    "instructions_to_main_agent": [
-      "OVERWRITE src/index.css with the new color variables (HSL values) to support opacity modifiers.",
-      "Remove the 'Marriott' theme completely.",
-      "Use 'lucide-react' for all icons.",
-      "Implement the 'Agent Grid' with 8 cards as requested.",
-      "The 'Live Feed' should look like a terminal or chat log with monospace font.",
-      "Use Recharts for the analytics panel with the custom color palette.",
-      "Ensure the Sidebar is collapsible or compact on mobile.",
-      "Connect the WebSocket visual indicator (mocked if backend not ready) to the top right.",
-      "All functional elements must have data-testid attributes."
+  "project_name": "Southern Horizons Hotel - Luxury AI Transformation",
+  "version": "1.0",
+  "identity": {
+    "persona": "E1 - The Anti-AI Designer",
+    "mission": "Transform a SaaS dashboard into a world-class luxury hotel website (Aman + Four Seasons + Ritz-Carlton).",
+    "principles": [
+      "Fusion over Imitation: Mix hospitality warmth with AI intelligence.",
+      "Emotion First: Every interaction must feel curated, not transactional.",
+      "Content is King: Editorial layouts, not dashboard grids.",
+      "Zoom In: Intimate details of textures and spaces.",
+      "Negative Space: Value the empty areas for breathing room."
     ]
   },
+  "typography": {
+    "headings": {
+      "font_family": "Cormorant Garamond, serif",
+      "weights": ["300", "400", "600"],
+      "usage": "All section titles, hero headlines, and feature names.",
+      "letter_spacing": "tracking-tight",
+      "line_height": "leading-none"
+    },
+    "body": {
+      "font_family": "Manrope, sans-serif",
+      "weights": ["300", "400", "500"],
+      "usage": "Paragraphs, UI elements, buttons, and booking inputs.",
+      "letter_spacing": "tracking-wide"
+    },
+    "mono": {
+      "font_family": "JetBrains Mono, monospace",
+      "usage": "Only for technical AI details (e.g., 'Processing request...') or small micro-labels."
+    }
+  },
+  "colors": {
+    "palette": {
+      "background": "#F7F3EE",
+      "foreground": "#0F1115",
+      "primary": "#C6A66B",
+      "secondary": "#D9D2C7",
+      "accent": "#8C6A43",
+      "muted": "#E5E0D8",
+      "card": "#FFFFFF",
+      "border": "#D9D2C7"
+    },
+    "utility": {
+      "success": "#4B6F44",
+      "warning": "#C6A66B",
+      "error": "#9F3A3A",
+      "info": "#5B7C99"
+    },
+    "theme_strategy": "Warm Luxury. Light backgrounds (Ivory/Stone) with Serif typography. Dark accents (Deep Charcoal) for footers or specific 'evening' modes. Avoid pure black and pure white."
+  },
+  "visual_enhancers": {
+    "border_radius": "rounded-none or rounded-sm (2px) for a sharp, editorial look. Max 4px for buttons.",
+    "shadows": {
+      "soft": "0 10px 40px -10px rgba(0,0,0,0.05)",
+      "floating": "0 20px 60px -15px rgba(15,17,21,0.1)"
+    },
+    "glassmorphism": {
+      "warm": "bg-[#F7F3EE]/80 backdrop-blur-md border border-white/20",
+      "dark": "bg-[#0F1115]/80 backdrop-blur-md border border-white/5"
+    },
+    "gradients": "No CSS gradients. Use natural light and shadow in images. Subtle mesh gradients only for AI interaction backgrounds (Champagne to Ivory)."
+  },
+  "layout_strategy": {
+    "container": "max-w-[1440px] mx-auto px-6 md:px-12 lg:px-24",
+    "spacing": "Generous. Section padding: py-24 or py-32. Element gap: gap-8 or gap-12.",
+    "grid_modes": {
+      "editorial": "Bento Grid Mode A (Asymmetric). Mix large hero images with smaller detail shots and text blocks.",
+      "listing": "Simple 3-column grid with extensive whitespace."
+    }
+  },
+  "components": [
+    {
+      "name": "HeroSection",
+      "path": "/app/frontend/src/components/HeroSection.jsx",
+      "description": "Full-screen cinematic experience. Image or video background. Minimal text. Bottom-aligned floating booking bar.",
+      "instructions": "Use full viewport height (h-screen). Title in Cormorant Garamond (text-6xl md:text-8xl). Subtitle in Manrope. Booking bar floats at bottom 10%."
+    },
+    {
+      "name": "BookingBar",
+      "path": "/app/frontend/src/components/BookingBar.jsx",
+      "description": "Sticky, glassmorphic bar for checking availability and accessing AI Concierge.",
+      "instructions": "Horizontal layout. Date picker, Guests selector, 'Check Availability' button (Primary Color). 'Ask Concierge' button (Ghost variant with sparkle icon)."
+    },
+    {
+      "name": "ExperienceSection",
+      "path": "/app/frontend/src/components/ExperienceSection.jsx",
+      "description": "Showcase of amenities (Dining, Spa, Events) using Bento Grid.",
+      "instructions": "Use grid-cols-12. Feature one large item (col-span-8) and two smaller items. sophisticated hover effects (image zoom, text reveal)."
+    },
+    {
+      "name": "RoomCard",
+      "path": "/app/frontend/src/components/RoomCard.jsx",
+      "description": "Minimalist card for room preview.",
+      "instructions": "Image top (aspect-[4/3] or [3/2]). Title (Serif). Price (Sans). 'AI Recommended' badge (Gold border, transparent bg). No heavy shadows."
+    },
+    {
+      "name": "AIConciergeOverlay",
+      "path": "/app/frontend/src/components/AIConciergeOverlay.jsx",
+      "description": "A full-screen or large modal overlay that acts as the intelligent concierge.",
+      "instructions": "Not a chat bubble. A conversational interface. 'Good evening, how may I assist you?'. Input field is large and central. Responses are elegant cards, not chat bubbles."
+    },
+    {
+      "name": "Footer",
+      "path": "/app/frontend/src/components/Footer.jsx",
+      "description": "Dark luxury footer.",
+      "instructions": "Background: #0F1115. Text: #F7F3EE. 4 columns. Newsletter signup. Social links. Copyright."
+    }
+  ],
+  "assets": {
+    "images": {
+      "hero_day": "https://images.unsplash.com/photo-1765812055488-b3ab402e66a9?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "hero_night": "https://images.unsplash.com/photo-1767460236903-586b6da3ece1?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "lobby": "https://images.unsplash.com/photo-1758193783649-13371d7fb8dd?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "suite_forest": "https://images.unsplash.com/photo-1760067537116-de1f76fe8f95?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "suite_city": "https://images.unsplash.com/photo-1771328756051-dff10c3feaab?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "dining": "https://images.unsplash.com/photo-1761501989065-7c98a5d1f773?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "exterior_detail": "https://images.unsplash.com/photo-1544709447-91e465a1706c?crop=entropy&cs=srgb&fm=jpg&q=85"
+    },
+    "icons": "Lucide React (thin stroke, 1px or 1.5px). Gold or Charcoal color."
+  },
+  "instructions_to_main_agent": {
+    "step_1": "Update `tailwind.config.js` and `index.css` with the new color palette and typography. Import fonts from Google Fonts.",
+    "step_2": "Create `BookingBar.jsx` and `HeroSection.jsx` first as they define the first impression.",
+    "step_3": "Refactor `Home.jsx` to use the new layout strategy (Hero -> Intro -> Experiences -> Rooms).",
+    "step_4": "Transform the existing AI booking flow into `AIConciergeOverlay.jsx`. It should feel like a dialogue, not a form wizard.",
+    "step_5": "Ensure all text uses the correct font family (Headings = Cormorant, Body = Manrope).",
+    "step_6": "Apply `data-testid` to all interactive elements."
+  },
   "universal_guidelines": [
-    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients",
-    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
-    "Create depth through layered design elements with z-index hierarchy",
-    "Use glass-morphism effects with backdrop filters (12-24px blur)",
-    "You MUST NOT apply universal transition. Eg: transition: all. This results in breaking transforms.",
-    "You MUST NOT center align the app container, ie do not add .App { text-align: center; } in the css file.",
-    "Always use modern button styles like pill-shaped, or sharp button with interaction animations",
-    "Every interaction needs micro-animations - hover states, transitions.",
-    "Use 2-3x more spacing than feels comfortable.",
-    "Prioritize using pre-existing components from src/components/ui when applicable",
-    "Components MUST use named exports (export const ComponentName = ...)",
-    "Use sonner for toasts"
+    "Do NOT use gradients for backgrounds, use solid colors or subtle noise.",
+    "Do NOT use standard shadow classes. Use custom soft shadows.",
+    "Ensure high contrast for text (APCA standards).",
+    "Use `framer-motion` for entrance animations (fade-up, slow reveal).",
+    "Never use the standard 'blue' link color. Use Primary or Accent color.",
+    "Mobile Responsiveness is paramount. Stack grids on mobile."
   ]
 }
