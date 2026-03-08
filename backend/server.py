@@ -35,13 +35,19 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database on startup"""
+    """Initialize database and seed demo data on startup"""
     try:
         from app.db.session import init_db
         init_db()
         print("[Server] Database initialized successfully")
     except Exception as e:
         print(f"[Server] Database init warning: {e}")
+
+    try:
+        from app.db.seed_data import seed_demo_data
+        seed_demo_data()
+    except Exception as e:
+        print(f"[Server] Seed warning: {e}")
 
 # Import and include all routers with /api prefix
 def _include_routers():

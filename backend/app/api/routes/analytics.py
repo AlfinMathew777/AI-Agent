@@ -52,7 +52,7 @@ async def get_analytics_summary():
             total_rooms = (c.fetchone() or [50])[0]
             c.execute("SELECT COUNT(*) FROM reservations WHERE status='confirmed' AND date(check_in_date) <= ? AND date(check_out_date) > ?", (today, today))
             active = (c.fetchone() or [0])[0]
-            result["occupancy_rate"] = round(active / max(1, total_rooms) * 100, 1)
+            result["occupancy_rate"] = min(100.0, round(active / max(1, total_rooms) * 100, 1))
 
             c.execute("SELECT COUNT(*) FROM chat_sessions WHERE date(created_at)=?", (today,))
             row = c.fetchone()
