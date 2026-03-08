@@ -175,6 +175,14 @@ A2A Nexus is a multi-agent AI hotel management system where 8 specialized AI age
 - [x] Booking status tracking
 - [x] 100% test pass rate (19 backend, all UI tests)
 
+### Phase 5.1: Date Bug Fix (Complete - 2026-12-10)
+- [x] **P0 Bug Fixed**: Browser date picker could produce malformed years (0026 instead of 2026)
+- [x] Frontend: Added `normalizeDate()` function in DatePicker component with validation
+- [x] Backend: Added `normalize_date_string()` helper function for defensive normalization
+- [x] Year range validation: Only accepts current year to +5 years
+- [x] Clear error messages for invalid dates
+- [x] Full regression test: 29/29 backend tests pass, 100% frontend coverage
+
 ## Platform Complete Status
 
 All major features implemented:
