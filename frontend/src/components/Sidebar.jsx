@@ -1,14 +1,86 @@
-import { Bot, LayoutDashboard, MessageSquare, Settings, BarChart3, ClipboardList, ChevronLeft, ChevronRight, Hotel, LogOut, User } from "lucide-react";
+import { 
+  Bot, 
+  LayoutDashboard, 
+  MessageSquare, 
+  Settings, 
+  BarChart3, 
+  ClipboardList, 
+  ChevronLeft, 
+  ChevronRight, 
+  LogOut, 
+  User,
+  Users,
+  BrainCircuit,
+  Headphones
+} from "lucide-react";
 
+// Navigation items with role-based visibility
 const NAV_ITEMS = [
-  { id: "a2a",        label: "A2A Dashboard",   icon: LayoutDashboard, badge: "LIVE" },
-  { id: "chat",       label: "Guest Chat",       icon: MessageSquare   },
-  { id: "admin",      label: "Admin Panel",      icon: Settings        },
-  { id: "operations", label: "Operations",       icon: ClipboardList   },
-  { id: "analytics",  label: "Analytics",        icon: BarChart3       },
+  { 
+    id: "a2a", 
+    label: "A2A Dashboard", 
+    icon: LayoutDashboard, 
+    badge: "LIVE",
+    allowedRoles: ["admin", "manager", "front_desk"]
+  },
+  { 
+    id: "chat", 
+    label: "Guest Chat", 
+    icon: MessageSquare,
+    allowedRoles: ["admin", "manager", "front_desk", "guest"]
+  },
+  { 
+    id: "staff_chat", 
+    label: "Staff Assistant", 
+    icon: Headphones,
+    allowedRoles: ["admin", "manager", "front_desk", "housekeeping", "restaurant"]
+  },
+  { 
+    id: "management", 
+    label: "Intelligence", 
+    icon: BrainCircuit,
+    badge: "AI",
+    allowedRoles: ["admin", "manager"]
+  },
+  { 
+    id: "admin", 
+    label: "Admin Panel", 
+    icon: Settings,
+    allowedRoles: ["admin"]
+  },
+  { 
+    id: "operations", 
+    label: "Operations", 
+    icon: ClipboardList,
+    allowedRoles: ["admin", "manager", "front_desk", "housekeeping", "restaurant"]
+  },
+  { 
+    id: "analytics", 
+    label: "Analytics", 
+    icon: BarChart3,
+    allowedRoles: ["admin", "manager"]
+  },
 ];
 
+// Role display names and colors
+const ROLE_CONFIG = {
+  admin: { label: "Administrator", color: "#EF4444", bgColor: "rgba(239,68,68,0.15)" },
+  manager: { label: "Manager", color: "#F59E0B", bgColor: "rgba(245,158,11,0.15)" },
+  front_desk: { label: "Front Desk", color: "#38BDF8", bgColor: "rgba(56,189,248,0.15)" },
+  housekeeping: { label: "Housekeeping", color: "#22C55E", bgColor: "rgba(34,197,94,0.15)" },
+  restaurant: { label: "Restaurant", color: "#A78BFA", bgColor: "rgba(167,139,250,0.15)" },
+  guest: { label: "Guest", color: "#94A3B8", bgColor: "rgba(148,163,184,0.15)" },
+};
+
 export default function Sidebar({ view, setView, user, open, setOpen, VIEWS, onLogout }) {
+  const userRole = user?.role || "guest";
+  const roleConfig = ROLE_CONFIG[userRole] || ROLE_CONFIG.guest;
+  
+  // Filter nav items based on user role
+  const visibleNavItems = NAV_ITEMS.filter(item => 
+    item.allowedRoles.includes(userRole)
+  );
+
   return (
     <aside
       data-testid="sidebar"
@@ -40,7 +112,7 @@ export default function Sidebar({ view, setView, user, open, setOpen, VIEWS, onL
 
       {/* Nav */}
       <nav style={{ flex: 1, padding: "0.75rem 0.5rem", display: "flex", flexDirection: "column", gap: 2 }}>
-        {NAV_ITEMS.map(({ id, label, icon: Icon, badge }) => {
+        {visibleNavItems.map(({ id, label, icon: Icon, badge }) => {
           const active = view === id;
           return (
             <button
@@ -74,7 +146,15 @@ export default function Sidebar({ view, setView, user, open, setOpen, VIEWS, onL
                 <span style={{ flex: 1 }}>{label}</span>
               )}
               {open && badge && (
-                <span style={{ fontSize: "0.6rem", padding: "1px 5px", borderRadius: 4, background: "rgba(34,197,94,0.15)", color: "#22C55E", border: "1px solid rgba(34,197,94,0.3)", letterSpacing: "0.05em" }}>
+                <span style={{ 
+                  fontSize: "0.6rem", 
+                  padding: "1px 5px", 
+                  borderRadius: 4, 
+                  background: badge === "AI" ? "rgba(167,139,250,0.15)" : "rgba(34,197,94,0.15)", 
+                  color: badge === "AI" ? "#A78BFA" : "#22C55E", 
+                  border: badge === "AI" ? "1px solid rgba(167,139,250,0.3)" : "1px solid rgba(34,197,94,0.3)", 
+                  letterSpacing: "0.05em" 
+                }}>
                   {badge}
                 </span>
               )}
@@ -88,19 +168,38 @@ export default function Sidebar({ view, setView, user, open, setOpen, VIEWS, onL
         <div style={{ padding: "0.75rem 0.5rem", borderTop: "1px solid #1E293B" }}>
           {open ? (
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0.5rem 0.75rem", borderRadius: 8, background: "rgba(255,255,255,0.03)" }}>
-              <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(56,189,248,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <User size={14} color="#38BDF8" />
+              <div style={{ width: 30, height: 30, borderRadius: "50%", background: roleConfig.bgColor, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <User size={14} color={roleConfig.color} />
               </div>
               <div style={{ flex: 1, overflow: "hidden" }}>
-                <div style={{ fontSize: "0.75rem", color: "#F1F5F9", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis" }}>{user.email}</div>
-                <div style={{ fontSize: "0.65rem", color: "#94A3B8", textTransform: "capitalize" }}>{user.role || "admin"}</div>
+                <div style={{ fontSize: "0.75rem", color: "#F1F5F9", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {user.full_name || user.email}
+                </div>
+                <div style={{ 
+                  fontSize: "0.6rem", 
+                  color: roleConfig.color, 
+                  fontWeight: 500,
+                  letterSpacing: "0.03em"
+                }}>
+                  {roleConfig.label}
+                </div>
               </div>
-              <button data-testid="sidebar-logout" onClick={onLogout} style={{ background: "none", border: "none", cursor: "pointer", color: "#64748B", padding: 4, borderRadius: 4, transition: "color 0.15s ease" }} onMouseEnter={e => e.currentTarget.style.color = "#EF4444"} onMouseLeave={e => e.currentTarget.style.color = "#64748B"}>
+              <button 
+                data-testid="sidebar-logout" 
+                onClick={onLogout} 
+                style={{ background: "none", border: "none", cursor: "pointer", color: "#64748B", padding: 4, borderRadius: 4, transition: "color 0.15s ease" }} 
+                onMouseEnter={e => e.currentTarget.style.color = "#EF4444"} 
+                onMouseLeave={e => e.currentTarget.style.color = "#64748B"}
+              >
                 <LogOut size={14} />
               </button>
             </div>
           ) : (
-            <button data-testid="sidebar-logout-compact" onClick={onLogout} style={{ width: "100%", padding: "0.5rem", background: "none", border: "none", cursor: "pointer", color: "#64748B", borderRadius: 8 }}>
+            <button 
+              data-testid="sidebar-logout-compact" 
+              onClick={onLogout} 
+              style={{ width: "100%", padding: "0.5rem", background: "none", border: "none", cursor: "pointer", color: "#64748B", borderRadius: 8 }}
+            >
               <LogOut size={18} strokeWidth={1.5} />
             </button>
           )}

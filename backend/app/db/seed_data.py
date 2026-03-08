@@ -38,11 +38,22 @@ GUESTS = [
     ("Ava Martinez",   "ava.m@gmail.com"),
 ]
 
+# Staff users with different roles for testing
+STAFF_USERS = [
+    {"email": "admin@hotel.com", "password": "admin123", "full_name": "Admin User", "role": "admin"},
+    {"email": "manager@hotel.com", "password": "manager123", "full_name": "John Manager", "role": "manager"},
+    {"email": "frontdesk@hotel.com", "password": "frontdesk123", "full_name": "Sarah Front Desk", "role": "front_desk"},
+    {"email": "housekeeping@hotel.com", "password": "housekeeping123", "full_name": "Maria Housekeeping", "role": "housekeeping"},
+    {"email": "restaurant@hotel.com", "password": "restaurant123", "full_name": "Chef Roberto", "role": "restaurant"},
+    {"email": "guest@hotel.com", "password": "guest123", "full_name": "Guest User", "role": "guest"},
+]
+
 
 def seed_demo_data():
-    """Seed rooms, reservations, and payments for all existing tenants."""
+    """Seed rooms, reservations, users, and payments for all existing tenants."""
     try:
         from app.db.session import get_db_connection
+        from app.core.security.auth import get_password_hash
         conn = get_db_connection()
         c = conn.cursor()
 
@@ -51,6 +62,27 @@ def seed_demo_data():
         tenant_ids = [row[0] for row in c.fetchall()]
         if not tenant_ids:
             tenant_ids = ["default-tenant-0000"]
+
+        # Ensure default tenant exists
+        c.execute("INSERT OR IGNORE INTO tenants (id, name) VALUES (?, ?)", 
+                  ("default-tenant-0000", "Default Hotel"))
+        
+        default_tenant_id = "default-tenant-0000"
+
+        # Seed staff users (only for default tenant)
+        for staff in STAFF_USERS:
+            c.execute("SELECT id FROM users WHERE email = ?", (staff["email"],))
+            if not c.fetchone():
+                user_id = str(uuid.uuid4())
+                password_hash = get_password_hash(staff["password"])
+                c.execute("""
+                    INSERT INTO users (id, tenant_id, email, password_hash, full_name, role, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    user_id, default_tenant_id, staff["email"], password_hash,
+                    staff["full_name"], staff["role"], datetime.now(UTC).isoformat()
+                ))
+                print(f"[Seed] Created user: {staff['email']} ({staff['role']})")
 
         for tenant_id in tenant_ids:
             # Check if rooms already seeded for this tenant
@@ -107,3 +139,5 @@ def seed_demo_data():
 
     except Exception as e:
         print(f"[Seed] Seeding error (non-fatal): {e}")
+        import traceback
+        traceback.print_exc()

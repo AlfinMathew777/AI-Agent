@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { ArrowLeft, Bot, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { ArrowLeft, Bot, Eye, EyeOff, AlertCircle, Users } from "lucide-react";
+
+// Test accounts for demo
+const TEST_ACCOUNTS = [
+  { email: "admin@hotel.com", password: "admin123", role: "admin", label: "Admin" },
+  { email: "manager@hotel.com", password: "manager123", role: "manager", label: "Manager" },
+  { email: "frontdesk@hotel.com", password: "frontdesk123", role: "front_desk", label: "Front Desk" },
+  { email: "housekeeping@hotel.com", password: "housekeeping123", role: "housekeeping", label: "Housekeeping" },
+  { email: "restaurant@hotel.com", password: "restaurant123", role: "restaurant", label: "Restaurant" },
+  { email: "guest@hotel.com", password: "guest123", role: "guest", label: "Guest" },
+];
 
 export default function LoginPage({ onLogin, onBack }) {
   const [email, setEmail] = useState("admin@hotel.com");
@@ -18,14 +28,29 @@ export default function LoginPage({ onLogin, onBack }) {
       fd.append("password", password);
       const res = await fetch("/api/auth/login", { method: "POST", body: fd });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.detail?.error || "Login failed");
-      localStorage.setItem("token", data.access_token);
-      onLogin({ email, role: data.role || "admin", token: data.access_token });
+      if (!res.ok) throw new Error(data?.detail?.error || data?.detail || "Login failed");
+      
+      // Pass all user data from the response
+      onLogin({
+        email: data.email,
+        role: data.role,
+        user_id: data.user_id,
+        tenant_id: data.tenant_id,
+        full_name: data.full_name,
+        allowed_pages: data.allowed_pages,
+        allowed_features: data.allowed_features,
+        access_token: data.access_token,
+      });
     } catch (err) {
       setError(err.message || "Unable to connect. Please try again.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleQuickLogin = (account) => {
+    setEmail(account.email);
+    setPassword(account.password);
   };
 
   return (
@@ -40,7 +65,7 @@ export default function LoginPage({ onLogin, onBack }) {
       </button>
 
       {/* Card */}
-      <div className="glass-card" style={{ width: "100%", maxWidth: 400, padding: "2.5rem" }}>
+      <div className="glass-card" style={{ width: "100%", maxWidth: 420, padding: "2.5rem" }}>
         {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: "2rem" }}>
           <div style={{ width: 56, height: 56, borderRadius: 14, background: "linear-gradient(135deg,#0EA5E9,#38BDF8)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1rem" }}>
@@ -112,9 +137,35 @@ export default function LoginPage({ onLogin, onBack }) {
           </button>
         </form>
 
-        <p style={{ textAlign: "center", marginTop: "1.5rem", fontSize: "0.75rem", color: "#64748B" }}>
-          Default: admin@hotel.com / admin123
-        </p>
+        {/* Quick Login Buttons */}
+        <div style={{ marginTop: "1.5rem", borderTop: "1px solid #334155", paddingTop: "1.5rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+            <Users size={14} color="#64748B" />
+            <span style={{ fontSize: "0.75rem", color: "#64748B" }}>Quick Login (Demo Accounts)</span>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {TEST_ACCOUNTS.map((account) => (
+              <button
+                key={account.email}
+                type="button"
+                onClick={() => handleQuickLogin(account)}
+                data-testid={`quick-login-${account.role}`}
+                style={{
+                  padding: "6px 12px",
+                  background: email === account.email ? "rgba(56,189,248,0.2)" : "rgba(255,255,255,0.05)",
+                  border: email === account.email ? "1px solid rgba(56,189,248,0.4)" : "1px solid #334155",
+                  borderRadius: 6,
+                  color: email === account.email ? "#38BDF8" : "#94A3B8",
+                  fontSize: "0.7rem",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease"
+                }}
+              >
+                {account.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
