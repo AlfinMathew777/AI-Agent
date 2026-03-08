@@ -285,10 +285,18 @@ export default function GuestChat({ onBack, embedded }) {
       const data = await res.json();
       
       if (data.checkout_url) {
-        addAssistantMessage("Redirecting you to secure payment...");
-        setTimeout(() => {
-          window.location.href = data.checkout_url;
-        }, 1000);
+        // Check if we're in an iframe (Emergent preview) - open in new tab
+        const isInIframe = window.self !== window.top;
+        
+        if (isInIframe) {
+          addAssistantMessage("Opening secure payment in a new tab...\n\n**Note:** Please complete payment in the new tab, then return here.", { showPaymentLink: true, paymentUrl: data.checkout_url });
+          window.open(data.checkout_url, '_blank');
+        } else {
+          addAssistantMessage("Redirecting you to secure payment...");
+          setTimeout(() => {
+            window.location.href = data.checkout_url;
+          }, 1000);
+        }
       } else {
         addAssistantMessage("Sorry, I couldn't create the checkout session. Please try again.");
       }
@@ -529,6 +537,33 @@ function MessageBubble({
             setBookingData={setBookingData}
             onProceed={onProceedToPayment}
           />
+        )}
+
+        {/* Payment Link (for iframe/popup blocked cases) */}
+        {message.showPaymentLink && message.paymentUrl && (
+          <a
+            href={message.paymentUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-testid="payment-link"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "0.75rem 1.25rem",
+              background: "linear-gradient(135deg, #22C55E, #16A34A)",
+              border: "none",
+              borderRadius: 10,
+              color: "#fff",
+              fontWeight: 600,
+              fontSize: "0.9rem",
+              textDecoration: "none",
+              cursor: "pointer",
+              marginTop: 8
+            }}
+          >
+            <CreditCard size={18} /> Click here to pay securely
+          </a>
         )}
 
         {/* Guest Info Form */}
