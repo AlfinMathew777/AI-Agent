@@ -1,0 +1,188 @@
+{
+  "design_system": {
+    "identity": {
+      "name": "Hotel A2A Nexus",
+      "persona": "Dark Professional Agent-to-Agent SaaS",
+      "tone": "Futuristic, Efficient, Data-Dense, Reliable",
+      "visual_style": "Deep Slate Backgrounds, Glowing Blue Accents, Glassmorphic Panels, Terminal-inspired Feeds"
+    },
+    "typography": {
+      "font_family": {
+        "headings": "Chivo, sans-serif",
+        "body": "Inter, sans-serif",
+        "mono": "JetBrains Mono, monospace"
+      },
+      "scale": {
+        "h1": "text-4xl md:text-5xl font-bold tracking-tight",
+        "h2": "text-3xl font-semibold tracking-tight",
+        "h3": "text-2xl font-medium",
+        "h4": "text-xl font-medium",
+        "body": "text-base leading-relaxed text-slate-300",
+        "small": "text-sm text-slate-400",
+        "mono": "text-xs md:text-sm font-mono"
+      },
+      "imports": [
+        "https://fonts.googleapis.com/css2?family=Chivo:wght@300;400;700;900&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      ]
+    },
+    "colors": {
+      "palette": {
+        "background": {
+          "hex": "#0F172A",
+          "hsl": "222 47% 11%",
+          "variable": "--background",
+          "description": "Deep Slate 900 - Main app background"
+        },
+        "card": {
+          "hex": "#1E293B",
+          "hsl": "215 28% 17%",
+          "variable": "--card",
+          "description": "Slate 800 - Panels and cards"
+        },
+        "primary": {
+          "hex": "#38BDF8",
+          "hsl": "199 89% 60%",
+          "variable": "--primary",
+          "description": "Sky 400 - Main actions, active states, glowing accents"
+        },
+        "secondary": {
+          "hex": "#334155",
+          "hsl": "215 25% 27%",
+          "variable": "--secondary",
+          "description": "Slate 700 - Secondary buttons, borders"
+        },
+        "success": {
+          "hex": "#22C55E",
+          "hsl": "142 71% 45%",
+          "variable": "--success",
+          "description": "Green 500 - System operational, completed tasks"
+        },
+        "warning": {
+          "hex": "#F59E0B",
+          "hsl": "38 92% 50%",
+          "variable": "--warning",
+          "description": "Amber 500 - Alerts, negotiation in progress"
+        },
+        "destructive": {
+          "hex": "#EF4444",
+          "hsl": "0 84% 60%",
+          "variable": "--destructive",
+          "description": "Red 500 - Errors, critical failures"
+        },
+        "muted": {
+          "hex": "#94A3B8",
+          "hsl": "215 16% 47%",
+          "variable": "--muted",
+          "description": "Slate 400 - Muted text, disabled states"
+        },
+        "border": {
+          "hex": "#334155",
+          "hsl": "215 25% 27%",
+          "variable": "--border",
+          "description": "Slate 700 - Panel borders"
+        }
+      },
+      "gradients": {
+        "hero": "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+        "glow": "radial-gradient(circle at center, rgba(56, 189, 248, 0.15) 0%, transparent 70%)"
+      }
+    },
+    "layout": {
+      "spacing_scale": {
+        "container_padding": "p-4 md:p-8 lg:p-12",
+        "section_gap": "gap-8",
+        "card_padding": "p-6"
+      },
+      "grid_systems": {
+        "dashboard_main": "grid grid-cols-1 md:grid-cols-12 gap-6",
+        "agent_grid": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4",
+        "bento_layout": "dashboard-bento"
+      },
+      "containers": {
+        "card": "bg-card border border-border/50 rounded-xl shadow-lg backdrop-blur-sm",
+        "glass_panel": "bg-card/80 backdrop-blur-md border border-white/5 shadow-xl"
+      }
+    },
+    "components": {
+      "buttons": {
+        "primary": "bg-primary text-slate-900 hover:bg-primary/90 font-medium shadow-[0_0_15px_rgba(56,189,248,0.3)] transition-all duration-200",
+        "secondary": "bg-secondary/50 text-white hover:bg-secondary/80 border border-white/10",
+        "outline": "border border-primary/50 text-primary hover:bg-primary/10",
+        "ghost": "hover:bg-white/5 text-slate-300 hover:text-white"
+      },
+      "inputs": {
+        "default": "bg-slate-950/50 border-border text-white placeholder:text-slate-500 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all"
+      },
+      "cards": {
+        "agent_status": "relative overflow-hidden group hover:border-primary/30 transition-colors duration-300",
+        "metric": "flex flex-col justify-between h-full"
+      },
+      "badges": {
+        "live": "animate-pulse bg-success/20 text-success border-success/20",
+        "offline": "bg-slate-700/50 text-slate-400 border-slate-600/50",
+        "busy": "bg-warning/20 text-warning border-warning/20"
+      }
+    },
+    "visual_enhancers": {
+      "shadows": {
+        "glow_sm": "0 0 10px rgba(56, 189, 248, 0.1)",
+        "glow_md": "0 0 20px rgba(56, 189, 248, 0.2)",
+        "panel": "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15)"
+      },
+      "borders": {
+        "subtle": "border border-white/5",
+        "highlight": "border border-primary/20"
+      },
+      "animations": {
+        "fade_in": "animate-in fade-in duration-500",
+        "slide_up": "animate-in slide-in-from-bottom-4 duration-500",
+        "pulse_slow": "animate-pulse duration-3000"
+      }
+    },
+    "assets": {
+      "images": {
+        "landing_hero": "https://images.unsplash.com/photo-1768543939312-7bbab10cb347?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "network_bg": "https://images.unsplash.com/photo-1698669993523-bcf101a925ef?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "abstract_nodes": "https://images.unsplash.com/photo-1650567397333-fa05fa466ba8?crop=entropy&cs=srgb&fm=jpg&q=85"
+      },
+      "icons": {
+        "library": "lucide-react",
+        "style": "stroke-width={1.5} className='w-5 h-5'"
+      }
+    },
+    "accessibility": {
+      "rules": [
+        "Ensure text contrast ratio of 4.5:1 against slate backgrounds",
+        "Use explicit hover/focus states for all interactive elements",
+        "Avoid relying solely on color for status (use icons + text)",
+        "All images must have alt text",
+        "Interactive elements must have data-testid attributes"
+      ]
+    },
+    "instructions_to_main_agent": [
+      "OVERWRITE src/index.css with the new color variables (HSL values) to support opacity modifiers.",
+      "Remove the 'Marriott' theme completely.",
+      "Use 'lucide-react' for all icons.",
+      "Implement the 'Agent Grid' with 8 cards as requested.",
+      "The 'Live Feed' should look like a terminal or chat log with monospace font.",
+      "Use Recharts for the analytics panel with the custom color palette.",
+      "Ensure the Sidebar is collapsible or compact on mobile.",
+      "Connect the WebSocket visual indicator (mocked if backend not ready) to the top right.",
+      "All functional elements must have data-testid attributes."
+    ]
+  },
+  "universal_guidelines": [
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy",
+    "Use glass-morphism effects with backdrop filters (12-24px blur)",
+    "You MUST NOT apply universal transition. Eg: transition: all. This results in breaking transforms.",
+    "You MUST NOT center align the app container, ie do not add .App { text-align: center; } in the css file.",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations",
+    "Every interaction needs micro-animations - hover states, transitions.",
+    "Use 2-3x more spacing than feels comfortable.",
+    "Prioritize using pre-existing components from src/components/ui when applicable",
+    "Components MUST use named exports (export const ComponentName = ...)",
+    "Use sonner for toasts"
+  ]
+}
