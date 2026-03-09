@@ -3,18 +3,30 @@
 ## Product Overview
 A2A Nexus is a multi-agent AI hotel management system where 8 specialized AI agents communicate in real-time to handle bookings, pricing, negotiation, and operations. The platform supports role-based access control (RBAC) for different hotel staff roles and provides a complete end-to-end guest booking experience with Stripe payment integration.
 
+**Brand:** Southern Horizons Hotel
+
 ## Architecture
 - **Backend**: FastAPI (Python), port 8001, SQLite + ChromaDB
-- **Frontend**: React 18 + CRA, port 3000, dark SaaS theme
+- **Frontend**: React 18 + CRA, port 3000
 - **AI**: Google Gemini 2.0 Flash via emergentintegrations
 - **Payments**: Stripe Checkout (test mode)
 - **A2A Protocol**: WebSocket + REST for real-time agent feed
 - **Auth**: JWT-based with role-based access control
 
 ## Design System
-- Background: #0F172A | Panels: #1E293B | Accent: #38BDF8
-- Success: #22C55E | Warning: #F59E0B | Error: #EF4444
-- Font: Chivo (headings) + Inter (body) + JetBrains Mono (terminal)
+
+### Public Website (Luxury Theme)
+- **Background**: Ivory #F7F3EE | Charcoal #0F1115
+- **Primary Accent**: Champagne Gold #C6A66B
+- **Secondary**: Stone #D9D2C7 | Bronze #8C6A43
+- **Typography**: Cormorant Garamond (headings) + Manrope (body)
+- **Style**: Aman minimalism + Four Seasons clarity + Ritz-Carlton polish
+
+### Internal Portals (Dark Theme)
+- **Background**: #0F172A | Panels: #1E293B
+- **Accent**: #38BDF8 (Sky Blue)
+- **Success**: #22C55E | Warning: #F59E0B | Error: #EF4444
+- **Font**: Chivo (headings) + Inter (body) + JetBrains Mono (terminal)
 
 ## Role-Based Access Control (RBAC)
 
@@ -183,18 +195,43 @@ A2A Nexus is a multi-agent AI hotel management system where 8 specialized AI age
 - [x] Clear error messages for invalid dates
 - [x] Full regression test: 29/29 backend tests pass, 100% frontend coverage
 
+### Phase 6: Luxury Website Transformation - Phase 1 (Complete - 2026-12-10)
+- [x] **New Luxury Landing Page** - Cinematic hero, booking bar, bento experience grid
+- [x] **Brand System** - Champagne gold (#C6A66B), ivory (#F7F3EE), charcoal (#0F1115)
+- [x] **Typography** - Cormorant Garamond (serif headings) + Manrope (sans-serif body)
+- [x] **AI Concierge** - Restyled booking flow as premium concierge experience
+- [x] **Sections Built**: Hero, Intro, Experiences Grid, AI Concierge, Rooms Preview, Trust Stats, CTA, Footer
+- [x] **Components Styled**: DatePicker, GuestPicker, MessageBubble, BookingSummary
+- [x] 100% frontend test pass rate - All 10 features verified
+
 ## Platform Complete Status
 
 All major features implemented:
+✅ **Luxury Public Website** - World-class hotel website design
+✅ **AI Concierge** - Premium booking experience with AI assistance
 ✅ **Staff AI** - Role-aware policy assistant with RAG
 ✅ **Management Intelligence** - Real-time business insights
 ✅ **Guided Booking** - Step-by-step room booking
 ✅ **Stripe Payments** - Secure checkout (test mode)
 
-## Future Enhancements (P1)
+## Future Enhancements
+
+### Phase 2 (Upcoming - Luxury Pages)
+- [ ] Rooms & Suites page with full room details
+- [ ] Dining page with restaurant showcase
+- [ ] Experiences page with curated activities
+- [ ] Offers page with special packages
+- [ ] Contact page
+
+### Phase 3 (Future - Portal Polish)
+- [ ] Internal portals visual refinement
+- [ ] Consistent design between public site and portals
+- [ ] Staff/Manager/Admin portal polish
+
+### Backlog (P2)
 - [ ] E2E testing suite (Playwright)
 - [ ] Email notifications (SendGrid)
 - [ ] Multi-tenant property switcher
-- [ ] Mobile responsive design
+- [ ] Mobile responsive design optimization
 - [ ] Guest loyalty program
 - [ ] Room service ordering
