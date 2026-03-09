@@ -342,38 +342,65 @@ export default function GuestChat({ onBack, embedded }) {
         height: embedded ? "100%" : "100vh",
         display: "flex",
         flexDirection: "column",
-        background: "#0F172A",
+        background: "#F7F3EE",
         position: "relative"
       }}
     >
-      {/* Header */}
+      {/* Header - Luxury Concierge Style */}
       {!embedded && (
         <div style={{
-          padding: "1rem 1.5rem",
-          borderBottom: "1px solid #1E293B",
+          padding: "1.25rem 2rem",
+          borderBottom: "1px solid #E5E0D8",
           display: "flex",
           alignItems: "center",
-          gap: 12,
-          background: "rgba(15,23,42,0.9)",
-          backdropFilter: "blur(8px)"
+          gap: 16,
+          background: "rgba(247,243,238,0.95)",
+          backdropFilter: "blur(12px)"
         }}>
-          <button onClick={onBack} style={{ background: "none", border: "none", color: "#64748B", cursor: "pointer", display: "flex" }}>
+          <button onClick={onBack} style={{ background: "none", border: "none", color: "#8C6A43", cursor: "pointer", display: "flex" }}>
             <ArrowLeft size={20} />
           </button>
-          <div style={{ width: 40, height: 40, borderRadius: 10, background: "linear-gradient(135deg,#0EA5E9,#38BDF8)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Bot size={20} color="#0F172A" />
+          <div style={{ 
+            width: 48, 
+            height: 48, 
+            borderRadius: "50%", 
+            border: "1px solid #C6A66B",
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center",
+            background: "#FDFCFA"
+          }}>
+            <Sparkles size={20} color="#C6A66B" />
           </div>
           <div>
-            <div style={{ color: "#F1F5F9", fontWeight: 600, fontSize: "0.95rem" }}>Southern Horizons Hotel</div>
-            <div style={{ color: "#38BDF8", fontSize: "0.7rem", display: "flex", alignItems: "center", gap: 4 }}>
-              <Zap size={10} /> AI Booking Assistant
+            <div style={{ 
+              color: "#0F1115", 
+              fontFamily: "'Cormorant Garamond', serif",
+              fontWeight: 400, 
+              fontSize: "1.25rem",
+              letterSpacing: "-0.02em"
+            }}>
+              AI Concierge
+            </div>
+            <div style={{ 
+              color: "#8C6A43", 
+              fontSize: "0.7rem", 
+              fontFamily: "'Manrope', sans-serif",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              display: "flex", 
+              alignItems: "center", 
+              gap: 6 
+            }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#4B6F44" }}></span>
+              Southern Horizons Hotel
             </div>
           </div>
         </div>
       )}
 
-      {/* Messages */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "1.5rem", display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Messages Area - Light Luxury Theme */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "2rem", display: "flex", flexDirection: "column", gap: 20, background: "#FDFCFA" }}>
         {messages.map((msg, idx) => (
           <MessageBubble 
             key={idx} 
@@ -392,38 +419,78 @@ export default function GuestChat({ onBack, embedded }) {
           />
         ))}
         {loading && (
-          <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#0EA5E9,#38BDF8)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Bot size={16} color="#0F172A" />
+          <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+            <div style={{ 
+              width: 36, 
+              height: 36, 
+              borderRadius: "50%", 
+              border: "1px solid #C6A66B",
+              background: "#FDFCFA",
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center" 
+            }}>
+              <Sparkles size={16} color="#C6A66B" />
             </div>
-            <div style={{ padding: "0.75rem 1rem", borderRadius: 12, background: "#1E293B", display: "flex", alignItems: "center", gap: 8 }}>
-              <Loader2 size={14} className="spin" color="#38BDF8" />
-              <span style={{ color: "#94A3B8", fontSize: "0.85rem" }}>Thinking...</span>
+            <div style={{ 
+              padding: "0.875rem 1.25rem", 
+              borderRadius: 4, 
+              background: "#F7F3EE",
+              border: "1px solid #E5E0D8", 
+              display: "flex", 
+              alignItems: "center", 
+              gap: 10 
+            }}>
+              <Loader2 size={14} className="spin" color="#C6A66B" />
+              <span style={{ color: "#5A5A5A", fontSize: "0.85rem", fontFamily: "'Manrope', sans-serif" }}>Preparing your options...</span>
             </div>
           </div>
         )}
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
+      {/* Input - Luxury Style */}
       {bookingStep === STEPS.WELCOME && (
-        <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #1E293B", background: "rgba(15,23,42,0.9)" }}>
-          <div style={{ display: "flex", gap: 10 }}>
+        <div style={{ 
+          padding: "1.25rem 2rem", 
+          borderTop: "1px solid #E5E0D8", 
+          background: "rgba(247,243,238,0.95)",
+          backdropFilter: "blur(8px)"
+        }}>
+          <div style={{ display: "flex", gap: 12 }}>
             <input
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyPress={e => e.key === "Enter" && sendChat()}
-              placeholder="Ask me anything about the hotel..."
+              placeholder="Ask the concierge anything..."
               data-testid="guest-chat-input"
-              style={{ flex: 1, padding: "0.75rem 1rem", borderRadius: 10, border: "1px solid #334155", background: "#0F172A", color: "#F1F5F9", fontSize: "0.9rem", outline: "none" }}
+              style={{ 
+                flex: 1, 
+                padding: "0.875rem 1.25rem", 
+                border: "1px solid #D9D2C7", 
+                background: "#FDFCFA", 
+                color: "#0F1115", 
+                fontSize: "0.9rem", 
+                fontFamily: "'Manrope', sans-serif",
+                outline: "none"
+              }}
             />
             <button
               onClick={() => sendChat()}
               disabled={loading || !input.trim()}
               data-testid="guest-chat-send"
-              style={{ width: 44, height: 44, borderRadius: 10, background: input.trim() ? "linear-gradient(135deg,#38BDF8,#0EA5E9)" : "#334155", border: "none", cursor: input.trim() ? "pointer" : "not-allowed", display: "flex", alignItems: "center", justifyContent: "center" }}
+              style={{ 
+                width: 48, 
+                height: 48, 
+                background: input.trim() ? "#C6A66B" : "#E5E0D8", 
+                border: "none", 
+                cursor: input.trim() ? "pointer" : "not-allowed", 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "center" 
+              }}
             >
-              <Send size={18} color={input.trim() ? "#0F172A" : "#64748B"} />
+              <Send size={18} color={input.trim() ? "#0F1115" : "#8A8A8A"} />
             </button>
           </div>
         </div>
@@ -459,44 +526,52 @@ function MessageBubble({
   const isUser = message.role === "user";
   
   return (
-    <div style={{ display: "flex", gap: 10, flexDirection: isUser ? "row-reverse" : "row", alignItems: "flex-start" }}>
+    <div style={{ display: "flex", gap: 12, flexDirection: isUser ? "row-reverse" : "row", alignItems: "flex-start" }}>
       <div style={{
-        width: 32, height: 32, borderRadius: "50%", flexShrink: 0,
-        background: isUser ? "linear-gradient(135deg,#A78BFA,#8B5CF6)" : "linear-gradient(135deg,#0EA5E9,#38BDF8)",
+        width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+        background: isUser ? "#0F1115" : "#FDFCFA",
+        border: isUser ? "none" : "1px solid #C6A66B",
         display: "flex", alignItems: "center", justifyContent: "center"
       }}>
-        {isUser ? <User size={16} color="#0F172A" /> : <Bot size={16} color="#0F172A" />}
+        {isUser ? <User size={16} color="#F7F3EE" /> : <Sparkles size={16} color="#C6A66B" />}
       </div>
       
       <div style={{ maxWidth: "80%", display: "flex", flexDirection: "column", gap: 12 }}>
         {/* Message content */}
         <div style={{
-          padding: "0.75rem 1rem",
-          borderRadius: 12,
-          background: isUser ? "rgba(167,139,250,0.15)" : "#1E293B",
-          border: isUser ? "1px solid rgba(167,139,250,0.3)" : "1px solid #334155",
-          color: "#F1F5F9",
+          padding: "1rem 1.25rem",
+          borderRadius: 4,
+          background: isUser ? "#0F1115" : "#F7F3EE",
+          border: isUser ? "none" : "1px solid #E5E0D8",
+          color: isUser ? "#F7F3EE" : "#0F1115",
           fontSize: "0.9rem",
-          lineHeight: 1.6
+          lineHeight: 1.7,
+          fontFamily: "'Manrope', sans-serif"
         }}>
           <div dangerouslySetInnerHTML={{ __html: marked.parse(message.content || "") }} />
         </div>
 
-        {/* Book Now Button */}
+        {/* Book Now Button - Luxury Gold Style */}
         {message.showBookingButton && (
           <button
             onClick={onStartBooking}
             data-testid="start-booking-btn"
             style={{
-              display: "flex", alignItems: "center", gap: 8,
-              padding: "0.75rem 1.25rem",
-              background: "linear-gradient(135deg,#38BDF8,#0EA5E9)",
-              border: "none", borderRadius: 10,
-              color: "#0F172A", fontWeight: 600, fontSize: "0.9rem",
-              cursor: "pointer", width: "fit-content"
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "0.875rem 1.5rem",
+              background: "#C6A66B",
+              border: "none",
+              color: "#0F1115", 
+              fontWeight: 500, 
+              fontSize: "0.8rem",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+              fontFamily: "'Manrope', sans-serif",
+              cursor: "pointer", 
+              width: "fit-content"
             }}
           >
-            <BedDouble size={18} /> Book a Room
+            <Sparkles size={16} /> Plan Your Stay
           </button>
         )}
 
@@ -671,10 +746,33 @@ function DatePicker({ onSelect }) {
   const isValid = checkIn && checkOut && isValidDate(checkIn) && isValidDate(checkOut) && checkIn < checkOut;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "1rem", background: "rgba(56,189,248,0.08)", borderRadius: 12, border: "1px solid rgba(56,189,248,0.2)" }}>
-      <div style={{ display: "flex", gap: 12 }}>
+    <div style={{ 
+      display: "flex", 
+      flexDirection: "column", 
+      gap: 16, 
+      padding: "1.5rem", 
+      background: "#FDFCFA", 
+      border: "1px solid #E5E0D8"
+    }}>
+      <div style={{ 
+        fontSize: "0.65rem", 
+        letterSpacing: "0.15em", 
+        textTransform: "uppercase", 
+        color: "#C6A66B",
+        fontWeight: 500
+      }}>
+        Select Your Dates
+      </div>
+      <div style={{ display: "flex", gap: 16 }}>
         <div style={{ flex: 1 }}>
-          <label style={{ display: "block", color: "#94A3B8", fontSize: "0.75rem", marginBottom: 6 }}>Check-in</label>
+          <label style={{ 
+            display: "block", 
+            color: "#5A5A5A", 
+            fontSize: "0.7rem", 
+            marginBottom: 8,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase"
+          }}>Check-in</label>
           <input
             type="date"
             value={checkIn}
@@ -682,11 +780,26 @@ function DatePicker({ onSelect }) {
             max={maxDate}
             onChange={handleCheckInChange}
             data-testid="checkin-date"
-            style={{ width: "100%", padding: "0.6rem", borderRadius: 8, border: "1px solid #334155", background: "#0F172A", color: "#F1F5F9", fontSize: "0.85rem" }}
+            style={{ 
+              width: "100%", 
+              padding: "0.875rem 1rem", 
+              border: "1px solid #D9D2C7", 
+              background: "#F7F3EE", 
+              color: "#0F1115", 
+              fontSize: "0.9rem",
+              fontFamily: "'Manrope', sans-serif"
+            }}
           />
         </div>
         <div style={{ flex: 1 }}>
-          <label style={{ display: "block", color: "#94A3B8", fontSize: "0.75rem", marginBottom: 6 }}>Check-out</label>
+          <label style={{ 
+            display: "block", 
+            color: "#5A5A5A", 
+            fontSize: "0.7rem", 
+            marginBottom: 8,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase"
+          }}>Check-out</label>
           <input
             type="date"
             value={checkOut}
@@ -694,12 +807,20 @@ function DatePicker({ onSelect }) {
             max={maxDate}
             onChange={handleCheckOutChange}
             data-testid="checkout-date"
-            style={{ width: "100%", padding: "0.6rem", borderRadius: 8, border: "1px solid #334155", background: "#0F172A", color: "#F1F5F9", fontSize: "0.85rem" }}
+            style={{ 
+              width: "100%", 
+              padding: "0.875rem 1rem", 
+              border: "1px solid #D9D2C7", 
+              background: "#F7F3EE", 
+              color: "#0F1115", 
+              fontSize: "0.9rem",
+              fontFamily: "'Manrope', sans-serif"
+            }}
           />
         </div>
       </div>
       {error && (
-        <div style={{ color: "#EF4444", fontSize: "0.75rem", textAlign: "center" }}>
+        <div style={{ color: "#9F3A3A", fontSize: "0.75rem", textAlign: "center" }}>
           {error}
         </div>
       )}
@@ -708,11 +829,15 @@ function DatePicker({ onSelect }) {
         disabled={!isValid}
         data-testid="confirm-dates-btn"
         style={{
-          padding: "0.7rem",
-          background: isValid ? "linear-gradient(135deg,#38BDF8,#0EA5E9)" : "#334155",
-          border: "none", borderRadius: 8,
-          color: isValid ? "#0F172A" : "#64748B",
-          fontWeight: 600, fontSize: "0.85rem",
+          padding: "0.875rem",
+          background: isValid ? "#C6A66B" : "#E5E0D8",
+          border: "none",
+          color: isValid ? "#0F1115" : "#8A8A8A",
+          fontWeight: 500, 
+          fontSize: "0.75rem",
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          fontFamily: "'Manrope', sans-serif",
           cursor: isValid ? "pointer" : "not-allowed"
         }}
       >
@@ -731,21 +856,69 @@ function GuestPicker({ onSelect }) {
   const [guests, setGuests] = useState(2);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "1rem", background: "rgba(56,189,248,0.08)", borderRadius: 12, border: "1px solid rgba(56,189,248,0.2)" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20 }}>
+    <div style={{ 
+      display: "flex", 
+      flexDirection: "column", 
+      gap: 16, 
+      padding: "1.5rem", 
+      background: "#FDFCFA", 
+      border: "1px solid #E5E0D8"
+    }}>
+      <div style={{ 
+        fontSize: "0.65rem", 
+        letterSpacing: "0.15em", 
+        textTransform: "uppercase", 
+        color: "#C6A66B",
+        fontWeight: 500
+      }}>
+        Number of Guests
+      </div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 24 }}>
         <button
           onClick={() => setGuests(Math.max(1, guests - 1))}
-          style={{ width: 40, height: 40, borderRadius: "50%", border: "1px solid #334155", background: "#0F172A", color: "#F1F5F9", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+          style={{ 
+            width: 44, 
+            height: 44, 
+            borderRadius: "50%", 
+            border: "1px solid #D9D2C7", 
+            background: "#F7F3EE", 
+            color: "#0F1115", 
+            cursor: "pointer", 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center" 
+          }}
         >
           <Minus size={18} />
         </button>
         <div style={{ textAlign: "center" }}>
-          <div style={{ color: "#F1F5F9", fontSize: "2rem", fontWeight: 700, fontFamily: "Chivo" }}>{guests}</div>
-          <div style={{ color: "#94A3B8", fontSize: "0.75rem" }}>Guest{guests > 1 ? "s" : ""}</div>
+          <div style={{ 
+            color: "#0F1115", 
+            fontSize: "2.5rem", 
+            fontWeight: 300, 
+            fontFamily: "'Cormorant Garamond', serif" 
+          }}>{guests}</div>
+          <div style={{ 
+            color: "#5A5A5A", 
+            fontSize: "0.7rem",
+            letterSpacing: "0.1em",
+            textTransform: "uppercase"
+          }}>Guest{guests > 1 ? "s" : ""}</div>
         </div>
         <button
           onClick={() => setGuests(Math.min(10, guests + 1))}
-          style={{ width: 40, height: 40, borderRadius: "50%", border: "1px solid #334155", background: "#0F172A", color: "#F1F5F9", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+          style={{ 
+            width: 44, 
+            height: 44, 
+            borderRadius: "50%", 
+            border: "1px solid #D9D2C7", 
+            background: "#F7F3EE", 
+            color: "#0F1115", 
+            cursor: "pointer", 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center" 
+          }}
         >
           <Plus size={18} />
         </button>
@@ -754,10 +927,15 @@ function GuestPicker({ onSelect }) {
         onClick={() => onSelect(guests)}
         data-testid="confirm-guests-btn"
         style={{
-          padding: "0.7rem",
-          background: "linear-gradient(135deg,#38BDF8,#0EA5E9)",
-          border: "none", borderRadius: 8,
-          color: "#0F172A", fontWeight: 600, fontSize: "0.85rem",
+          padding: "0.875rem",
+          background: "#C6A66B",
+          border: "none",
+          color: "#0F1115", 
+          fontWeight: 500, 
+          fontSize: "0.75rem",
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          fontFamily: "'Manrope', sans-serif",
           cursor: "pointer"
         }}
       >

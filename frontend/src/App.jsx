@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import "./App.css";
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
-import LandingPage from "./pages/LandingPage";
+import LuxuryLanding from "./pages/LuxuryLanding";
 import GuestChat from "./pages/GuestChat";
 import A2ADashboard from "./pages/A2ADashboard";
 import AdminPanel from "./pages/AdminPanel";
@@ -122,7 +122,7 @@ export default function App() {
   if (view === VIEWS.LANDING) {
     return (
       <div className="App">
-        <LandingPage
+        <LuxuryLanding
           onNavigate={handleSetView}
           onLogin={() => setView(VIEWS.LOGIN)}
           VIEWS={VIEWS}
